@@ -69,6 +69,15 @@ PUB DefaultsGest{}
 
     powered(true)
 
+PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
+' All ambient light source data
+'   ptr_c, ptr_r, ptr_g, ptr_b: pointers at least 1 word in size, each
+    readreg(core#CDATAL, 8, @tmp)
+    long[ptr_c] := tmp.word[0]
+    long[ptr_r] := tmp.word[1]
+    long[ptr_g] := tmp.word[2]
+    long[ptr_b] := tmp.word[3]
+
 PUB ALSDataReady{}: flag
 ' Flag indicating ambient light source data is ready
 '   Returns: TRUE (-1) or FALSE (0)
