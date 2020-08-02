@@ -55,6 +55,19 @@ PUB Stop{}
 
 PUB Defaults{}
 ' Set factory defaults
+    powered(false)
+
+PUB DefaultsALS{}
+
+    powered(true)
+
+PUB DefaultsProx{}
+
+    powered(true)
+
+PUB DefaultsGest{}
+
+    powered(true)
 
 PUB ALSDataReady{}: flag
 ' STATUS: AVALID
@@ -91,7 +104,19 @@ PUB OpMode(mode): curr_mode
 ' GCONF4?
 
 PUB Powered(state): curr_state
-' ENABLE: PON
+' Enable device power
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the device and returns the current setting
+    curr_state := 0
+    readreg(core#ENABLE, 1, @curr_state)
+    case ||(state)
+        0, 1:
+            state := ||(state)
+        other:
+            return (curr_state & %1) == 1
+
+    state := (curr_state & core#PON_MASK) | state
+    writereg(core#ENABLE, 1, @state)
 
 PUB ProxDataReady{}: flag
 ' STATUS: PVALID

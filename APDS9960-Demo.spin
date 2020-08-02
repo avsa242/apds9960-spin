@@ -41,7 +41,6 @@ VAR
 PUB Main{}
 
     setup{}
-    ser.hex(apds.deviceid{}, 8)
     flashled(LED, 100)
 
 PUB Setup{}
