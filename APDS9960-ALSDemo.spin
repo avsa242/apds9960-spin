@@ -47,6 +47,7 @@ PUB Main{} | c, r, g, b
     apds.alsenabled(true)
 
     repeat
+        repeat until apds.alsdataready{}
         apds.alsdata(@c, @r, @g, @b)
 
 ' Alternatively, read individual channels:
