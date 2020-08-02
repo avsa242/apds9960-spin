@@ -87,14 +87,24 @@ PUB ALSIntsEnabled(state): curr_state
 PUB ALSIntThreshold(low, high, rw): curr_setting
 ' [AILTL, AILTH], [AIHTL, AIHTH]: 8b ea
 
+PUB BlueData{}: bdata
+' Blue-channel sensor data
+'   Returns: 16-bit unsigned
+    readreg(core#CDATAL, 2, @bdata)
+
 PUB ClearData{}: cdata
 ' Clear-channel sensor data
 '   Returns: 16-bit unsigned
-    readreg(core#CDATA, 2, @cdata)
+    readreg(core#CDATAL, 2, @cdata)
 
 PUB DeviceID{}: id
 ' Read device identification
     readreg(core#DEVICEID, 1, @id)
+
+PUB GreenData{}: gdata
+' Green-channel sensor data
+'   Returns: 16-bit unsigned
+    readreg(core#GDATAL, 2, @gdata)
 
 PUB GesturesEnabled(state): curr_state
 ' ENABLE: GEN
@@ -140,6 +150,11 @@ PUB ProxIntsEnabled(state): curr_state
 
 PUB ProxIntThresh(low, high, rw): curr_thr
 ' PILT, PIHT: 8b ea
+
+PUB RedData{}: rdata
+' Red-channel sensor data
+'   Returns: 16-bit unsigned
+    readreg(core#RDATAL, 2, @rdata)
 
 PUB Reset{}
 ' Reset the device
