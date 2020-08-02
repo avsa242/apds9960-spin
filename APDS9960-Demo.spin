@@ -38,9 +38,24 @@ VAR
 
     byte _ser_cog
 
-PUB Main{}
+PUB Main{} | c, r, g, b
 
     setup{}
+
+    apds.powered(true)
+    apds.alsenabled(true)
+
+    repeat
+        apds.alsdata(@c, @r, @g, @b)
+
+' Alternatively, read individual channels:
+'        c := apds.cleardata{}
+'        r := apds.reddata{}
+'        g := apds.greendata{}
+'        b := apds.bluedata{}
+        ser.position(0, 5)
+        ser.printf(string("Clear: %x\nRed:   %x\nGreen: %x\nBlue:  %x\n"), c, r, g, b, 0, 0)
+
     flashled(LED, 100)
 
 PUB Setup{}
