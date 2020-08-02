@@ -149,7 +149,19 @@ PUB ALSIntPersistence(cycles): curr_setting
     writereg(core#PERS, 1, @cycles)
 
 PUB ALSIntsEnabled(state): curr_state
-' ENABLE: AIEN
+' Enable ALS interrupt source
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the device and returns the current setting
+    curr_state := 0
+    readreg(core#ENABLE, 1, @curr_state)
+    case ||(state)
+        0, 1:
+            state := ||(state) << core#AIEN
+        other:
+            return ((curr_state >> core#AIEN) & %1) == 1
+
+    state := (curr_state & core#AIEN_MASK) | state
+    writereg(core#ENABLE, 1, @state)
 
 PUB ALSIntThreshold(low, high, rw): curr_setting
 ' [AILTL, AILTH], [AIHTL, AIHTH]: 8b ea
