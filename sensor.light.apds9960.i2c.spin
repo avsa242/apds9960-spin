@@ -58,22 +58,27 @@ PUB Defaults{}
     powered(false)
     alsenabled(false)
     alsgain(1)
+    alsintsenabled(false)
     alsintpersistence(0)
     alsintthreshold(0, 0, W)
     integrationtime(2_780)
+    waittimerenabled(false)
 
 PUB DefaultsALS{}
 ' Set defaults for using the sensor in ALS/RGB mode
     powered(true)
     alsenabled(true)
     alsgain(1)
+    alsintsenabled(true)
     alsintpersistence(0)
     alsintthreshold(0, 0, W)
     integrationtime(2_780)
+    waittimerenabled(false)
 
 PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
+    waittimerenabled(false)
 
 PUB DefaultsGest{}
 ' Set defaults for using the sensor in gesture sensor mode
@@ -279,7 +284,19 @@ PUB WaitTime(usecs): curr_setting
 ' WTIME: 8b, 2.78ms per LSB = 2780us per LSB (if WLONG==1, time*=12) 256-TIME/2.78ms
 
 PUB WaitTimerEnabled(state): curr_state
-' ENABLE: WEN
+' Enable inter-measurement wait timer
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the device and returns the current setting
+    curr_state := 0
+    readreg(core#ENABLE, 1, @curr_state)
+    case ||(state)
+        0, 1:
+            state := ||(state) << core#WEN
+        other:
+            return ((curr_state >> core#WEN) & 1) == 1
+
+    state := (curr_state & core#WEN_MASK) | state
+    writereg(core#ENABLE, 1, @state)
 
 PRI readReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
 ' Read nr_bytes from the slave device
