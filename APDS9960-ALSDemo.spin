@@ -1,8 +1,9 @@
 {
     --------------------------------------------
-    Filename: APDS9960-Demo.spin
+    Filename: APDS9960-ALSDemo.spin
     Author: Jesse Burt
     Description: Demo of the APDS9960 driver
+        (ALS functionality)
     Copyright (c) 2020
     Started Aug 02, 2020
     Updated Aug 02, 2020
