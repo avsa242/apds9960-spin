@@ -56,42 +56,108 @@ PUB Stop{}
 PUB Defaults{}
 ' Set factory defaults
 
+PUB ALSDataReady{}: flag
+' STATUS: AVALID
+
+PUB ALSEnabled(state): curr_state
+' ENABLE: AEN
+
+PUB ALSGain(factor): curr_gain
+' CONTROL: AGAIN: 1, 4, 16, 64
+
+PUB ALSIntPersistence(cycles): curr_setting
+' PERS: APERS: 0: every, 1: any outside, 2, 3=1:1 cycles, 4..15=(n-3)*5 cycles
+
+PUB ALSIntsEnabled(state): curr_state
+' ENABLE: AIEN
+
+PUB ALSIntThreshold(low, high, rw): curr_setting
+' [AILTL, AILTH], [AIHTL, AIHTH]: 8b ea
+
 PUB DeviceID{}: id
 ' Read device identification
     readreg(core#DEVICEID, 1, @id)
 
+PUB GesturesEnabled(state): curr_state
+' ENABLE: GEN
+
+PUB IntegrationTime(usecs): curr_setting
+' ATIME: 8b, 2.78ms per LSB = 2780us per LSB, 256-TIME/2.78ms. ADC max := 1025*cycles
+
+PUB LEDDriveCurrent(mA): curr_setting
+' CONTROL: LDRIVE: 100, 50, 25, 12.5
+
+PUB OpMode(mode): curr_mode
+' GCONF4?
+
+PUB Powered(state): curr_state
+' ENABLE: PON
+
+PUB ProxDataReady{}: flag
+' STATUS: PVALID
+
+PUB ProxDetEnabled(state): curr_state
+' ENABLE: PEN
+
+PUB ProxGain(factor): curr_gain
+' CONTROL: PGAIN: 1, 2, 4, 8
+
+PUB ProxIntPersistence(cycles): curr_setting
+' PERS: PPERS, 0: every, 1: any outside, 2..15=1:1 cycles
+
+PUB ProxIntsEnabled(state): curr_state
+' ENABLE: PEN
+
+PUB ProxIntThresh(low, high, rw): curr_thr
+' PILT, PIHT: 8b ea
+
 PUB Reset{}
 ' Reset the device
 
+PUB WaitTime(usecs): curr_setting
+' WTIME: 8b, 2.78ms per LSB = 2780us per LSB (if WLONG==1, time*=12) 256-TIME/2.78ms
+
+PUB WaitTimerEnabled(state): curr_state
+' ENABLE: WEN
+
 PRI readReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
-'' Read num_bytes from the slave device into the address stored in buff_addr
-    case reg_nr                                                 'Basic register validation
-        $00..$FF:                                               ' Consult your device's datasheet!
-            cmd_packet.byte[0] := SLAVE_WR
-            cmd_packet.byte[1] := reg_nr
-            i2c.start{}
-            i2c.wr_block (@cmd_packet, 2)
-            i2c.start{}
-            i2c.write (SLAVE_RD)
-            i2c.rd_block (buff_addr, nr_bytes, TRUE)
-            i2c.stop{}
+' Read nr_bytes from the slave device
+    case reg_nr                                             ' Basic register validation
+        core#CDATAL, core#RDATAL, core#GDATAL, core#BDATAL, core#PDATA:
+
+        core#RAM..core#ATIME, core#WTIME..core#AIHTH, core#PILT, core#PIHT..core#CONFIG2, core#DEVICEID..core#STATUS, core#POFFSET_UR..core#GOFFSET_L, core#GOFFSET_R..core#GCONF4, core#GFLVL, core#GSTATUS, core#GFIFO_U..core#GFIFO_R:
+
         OTHER:
             return
+
+    cmd_packet.byte[0] := SLAVE_WR
+    cmd_packet.byte[1] := reg_nr
+    i2c.start{}
+    i2c.wr_block (@cmd_packet, 2)
+    i2c.start{}
+    i2c.write (SLAVE_RD)
+    i2c.rd_block (buff_addr, nr_bytes, TRUE)
+    i2c.stop{}
 
 PRI writeReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
-'' Write num_bytes to the slave device from the address stored in buff_addr
-    case reg_nr                                                 'Basic register validation
-        $00..$FF:                                               ' Consult your device's datasheet!
-            cmd_packet.byte[0] := SLAVE_WR
-            cmd_packet.byte[1] := reg_nr
-            i2c.start{}
-            i2c.wr_block (@cmd_packet, 2)
-            repeat tmp from 0 to nr_bytes-1
-                i2c.write (byte[buff_addr][tmp])
-            i2c.stop{}
+' Write nr_bytes to the slave device
+    case reg_nr                                             ' Basic register validation
+        core#RAM..core#ATIME, core#WTIME..core#AIHTH, core#PILT, core#PIHT, core#PERS..core#CONTROL, core#POFFSET_UR..core#GOFFSET_L, core#GOFFSET_R..core#GCONF4:
+        core#CONFIG2:
+            byte[buff_addr][0] |= 1                         ' APDS9960: Reserved bit that must always be set
+
+        core#IFORCE..core#AICLEAR:
+
         OTHER:
             return
 
+    cmd_packet.byte[0] := SLAVE_WR
+    cmd_packet.byte[1] := reg_nr
+    i2c.start{}
+    i2c.wr_block (@cmd_packet, 2)
+    repeat tmp from 0 to nr_bytes-1
+        i2c.write (byte[buff_addr][tmp])
+    i2c.stop{}
 
 DAT
 {
