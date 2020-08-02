@@ -13,16 +13,16 @@
 
 CON
 
-    SLAVE_WR          = core#SLAVE_ADDR
-    SLAVE_RD          = core#SLAVE_ADDR|1
+    SLAVE_WR        = core#SLAVE_ADDR
+    SLAVE_RD        = core#SLAVE_ADDR|1
 
-    DEF_SCL           = 28
-    DEF_SDA           = 29
-    DEF_HZ            = 100_000
-    I2C_MAX_FREQ      = core#I2C_MAX_FREQ
+    DEF_SCL         = 28
+    DEF_SDA         = 29
+    DEF_HZ          = 100_000
+    I2C_MAX_FREQ    = core#I2C_MAX_FREQ
 
-VAR
-
+    R               = 0
+    W               = 1
 
 OBJ
 
@@ -164,7 +164,24 @@ PUB ALSIntsEnabled(state): curr_state
     writereg(core#ENABLE, 1, @state)
 
 PUB ALSIntThreshold(low, high, rw): curr_setting
-' [AILTL, AILTH], [AIHTL, AIHTH]: 8b ea
+' Set ALS interrupt thresholds
+'   Valid values
+'       low, high: 0..65535
+'       rw:
+'           R (0) read current values
+'           W (1) write new values
+'   Any other value polls the device and returns the current setting
+'   NOTE: When reading, low and high must be pointers to word or larger sized variables
+    case rw
+        R:
+            readreg(core#AILTL, 2, low)
+            readreg(core#AIHTL, 2, high)
+        W:
+            if lookdown(low: 0..65535) and lookdown(high: 0..65535)
+                writereg(core#AILTL, 2, @low)
+                writereg(core#AIHTL, 2, @high)
+
+    return
 
 PUB BlueData{}: bdata
 ' Blue-channel sensor data
