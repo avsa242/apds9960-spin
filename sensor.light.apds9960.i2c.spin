@@ -281,7 +281,18 @@ PUB Reset{}
 ' Reset the device
 
 PUB WaitTime(usecs): curr_setting
-' WTIME: 8b, 2.78ms per LSB = 2780us per LSB (if WLONG==1, time*=12) 256-TIME/2.78ms
+' Set inter-measurement wait timer (low-power mode between measurements), in microseconds
+'   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
+'   Any other value polls the device and returns the current setting
+'   NOTE: This setting only applies to the ALS/RGB engine. The proximity and gesture engines are not affected.
+    case usecs
+        2_780..712_000:
+            usecs := 256-(usecs / 2_780)
+            writereg(core#ATIME, 1, @usecs)
+        other:
+            curr_setting := 0
+            readreg(core#WTIME, 1, @curr_setting)
+            return (256-curr_setting) * 2_780
 
 PUB WaitTimerEnabled(state): curr_state
 ' Enable inter-measurement wait timer
