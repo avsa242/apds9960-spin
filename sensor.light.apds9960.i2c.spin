@@ -81,6 +81,7 @@ PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
 PUB ALSDataReady{}: flag
 ' Flag indicating ambient light source data is ready
 '   Returns: TRUE (-1) or FALSE (0)
+    flag := 0
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#AVALID) & 1) == 1
 
@@ -88,6 +89,7 @@ PUB ALSEnabled(state): curr_state
 ' Enable ambient light source sensor/ADC
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
+    curr_state := 0
     readreg(core#ENABLE, 1, @curr_state)
     case ||(state)
         0, 1:
@@ -112,20 +114,24 @@ PUB ALSIntThreshold(low, high, rw): curr_setting
 PUB BlueData{}: bdata
 ' Blue-channel sensor data
 '   Returns: 16-bit unsigned
+    bdata := 0
     readreg(core#CDATAL, 2, @bdata)
 
 PUB ClearData{}: cdata
 ' Clear-channel sensor data
 '   Returns: 16-bit unsigned
+    cdata := 0
     readreg(core#CDATAL, 2, @cdata)
 
 PUB DeviceID{}: id
 ' Read device identification
+    id := 0
     readreg(core#DEVICEID, 1, @id)
 
 PUB GreenData{}: gdata
 ' Green-channel sensor data
 '   Returns: 16-bit unsigned
+    gdata := 0
     readreg(core#GDATAL, 2, @gdata)
 
 PUB GesturesEnabled(state): curr_state
@@ -176,6 +182,7 @@ PUB ProxIntThresh(low, high, rw): curr_thr
 PUB RedData{}: rdata
 ' Red-channel sensor data
 '   Returns: 16-bit unsigned
+    rdata := 0
     readreg(core#RDATAL, 2, @rdata)
 
 PUB Reset{}
