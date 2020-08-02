@@ -95,6 +95,7 @@ PUB ALSEnabled(state): curr_state
         0, 1:
             state <<= core#AEN
         other:
+            return ((curr_state >> core#AEN) & %1) == 1
 
     state := (curr_state & core#AEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
