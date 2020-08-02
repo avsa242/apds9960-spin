@@ -93,7 +93,7 @@ PUB ALSEnabled(state): curr_state
     readreg(core#ENABLE, 1, @curr_state)
     case ||(state)
         0, 1:
-            state <<= core#AEN
+            state := ||(state) << core#AEN
         other:
             return ((curr_state >> core#AEN) & %1) == 1
 
