@@ -54,19 +54,25 @@ PUB Stop{}
     i2c.terminate
 
 PUB Defaults{}
-' Set factory defaults
+' Set factory/POR defaults
     powered(false)
+    alsenabled(false)
+    alsgain(1)
+    alsintpersistence(0)
 
 PUB DefaultsALS{}
-
+' Set defaults for using the sensor in ALS/RGB mode
     powered(true)
+    alsenabled(true)
+    alsgain(1)
+    alsintpersistence(0)
 
 PUB DefaultsProx{}
-
+' Set defaults for using the sensor in proximity sensor mode
     powered(true)
 
 PUB DefaultsGest{}
-
+' Set defaults for using the sensor in gesture sensor mode
     powered(true)
 
 PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
@@ -87,7 +93,7 @@ PUB ALSDataReady{}: flag
 
 PUB ALSEnabled(state): curr_state
 ' Enable ambient light source sensor/ADC
-'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core#ENABLE, 1, @curr_state)
@@ -102,7 +108,7 @@ PUB ALSEnabled(state): curr_state
 
 PUB ALSGain(factor): curr_gain
 ' Set ambient light sensor gain multiplier
-'   Valid values: 1, 4, 16, 64
+'   Valid values: *1, 4, 16, 64
 '   Any other value polls the device and returns the current setting
     curr_gain := 0
     readreg(core#CONTROL, 1, @curr_gain)
@@ -117,7 +123,30 @@ PUB ALSGain(factor): curr_gain
     writereg(core#CONTROL, 1, @factor)
 
 PUB ALSIntPersistence(cycles): curr_setting
-' PERS: APERS: 0: every, 1: any outside, 2, 3=1:1 cycles, 4..15=(n-3)*5 cycles
+' Set interrupt persistence, in cycles
+'   Defines how many consecutive measurements must be outside the interrupt threshold
+'   before an interrupt is actually triggered (e.g., to reduce false positives)
+'   Valid values:
+'      *0 - _Every measurement_ triggers an interrupt, _regardless_
+'       1 - Every measurement _outside your set threshold_ triggers an interrupt
+'       2 - Must be 2 consecutive measurements outside the set threshold to trigger an interrupt
+'       3 - Must be 3 consecutive measurements outside the set threshold to trigger an interrupt
+'       5..60 - _n_ consecutive measurements, in multiples of 5
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#PERS, 1, @curr_setting)
+    case cycles
+        0..3:
+        5..60:
+            cycles := (cycles / 5) + 3
+        other:
+            if (curr_setting &= core#APERS_BITS) =< 3
+                return curr_setting
+            else
+                return ((curr_setting & core#APERS_BITS) - 3) * 5
+
+    cycles := (curr_setting & core#APERS_MASK) | cycles
+    writereg(core#PERS, 1, @cycles)
 
 PUB ALSIntsEnabled(state): curr_state
 ' ENABLE: AIEN
@@ -162,7 +191,7 @@ PUB OpMode(mode): curr_mode
 
 PUB Powered(state): curr_state
 ' Enable device power
-'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core#ENABLE, 1, @curr_state)
