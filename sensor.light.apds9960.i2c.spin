@@ -76,7 +76,17 @@ PUB ALSDataReady{}: flag
     return ((flag >> core#AVALID) & 1) == 1
 
 PUB ALSEnabled(state): curr_state
-' ENABLE: AEN
+' Enable ambient light source sensor/ADC
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the device and returns the current setting
+    readreg(core#ENABLE, 1, @curr_state)
+    case ||(state)
+        0, 1:
+            state <<= core#AEN
+        other:
+
+    state := (curr_state & core#AEN_MASK) | state
+    writereg(core#ENABLE, 1, @state)
 
 PUB ALSGain(factor): curr_gain
 ' CONTROL: AGAIN: 1, 4, 16, 64
