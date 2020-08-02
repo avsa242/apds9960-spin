@@ -70,7 +70,10 @@ PUB DefaultsGest{}
     powered(true)
 
 PUB ALSDataReady{}: flag
-' STATUS: AVALID
+' Flag indicating ambient light source data is ready
+'   Returns: TRUE (-1) or FALSE (0)
+    readreg(core#STATUS, 1, @flag)
+    return ((flag >> core#AVALID) & 1) == 1
 
 PUB ALSEnabled(state): curr_state
 ' ENABLE: AEN
