@@ -101,7 +101,20 @@ PUB ALSEnabled(state): curr_state
     writereg(core#ENABLE, 1, @state)
 
 PUB ALSGain(factor): curr_gain
-' CONTROL: AGAIN: 1, 4, 16, 64
+' Set ambient light sensor gain multiplier
+'   Valid values: 1, 4, 16, 64
+'   Any other value polls the device and returns the current setting
+    curr_gain := 0
+    readreg(core#CONTROL, 1, @curr_gain)
+    case factor
+        1, 4, 16, 64:
+            factor := lookdownz(factor: 1, 4, 16, 64)
+        other:
+            curr_gain &= core#AGAIN_BITS
+            return lookupz(curr_gain: 1, 4, 16, 64)
+
+    factor := (curr_gain & core#AGAIN_MASK) | factor
+    writereg(core#CONTROL, 1, @factor)
 
 PUB ALSIntPersistence(cycles): curr_setting
 ' PERS: APERS: 0: every, 1: any outside, 2, 3=1:1 cycles, 4..15=(n-3)*5 cycles
