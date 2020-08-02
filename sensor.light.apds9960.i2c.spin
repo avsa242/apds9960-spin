@@ -87,6 +87,11 @@ PUB ALSIntsEnabled(state): curr_state
 PUB ALSIntThreshold(low, high, rw): curr_setting
 ' [AILTL, AILTH], [AIHTL, AIHTH]: 8b ea
 
+PUB ClearData{}: cdata
+' Clear-channel sensor data
+'   Returns: 16-bit unsigned
+    readreg(core#CDATA, 2, @cdata)
+
 PUB DeviceID{}: id
 ' Read device identification
     readreg(core#DEVICEID, 1, @id)
