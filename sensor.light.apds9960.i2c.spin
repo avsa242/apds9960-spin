@@ -62,6 +62,7 @@ PUB Defaults{}
     alsintpersistence(0)
     alsintthreshold(0, 0, W)
     integrationtime(2_780)
+    proxdetenabled(false)
     waittimerenabled(false)
 
 PUB DefaultsALS{}
@@ -73,11 +74,13 @@ PUB DefaultsALS{}
     alsintpersistence(0)
     alsintthreshold(0, 0, W)
     integrationtime(2_780)
+    proxdetenabled(false)
     waittimerenabled(false)
 
 PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
+    proxdetenabled(true)
     waittimerenabled(false)
 
 PUB DefaultsGest{}
@@ -275,7 +278,20 @@ PUB ProxDetEnabled(state): curr_state
     writereg(core#ENABLE, 1, @state)
 
 PUB ProxGain(factor): curr_gain
-' CONTROL: PGAIN: 1, 2, 4, 8
+' Set proximity sensor gain multiplier
+'   Valid values: *1, 2, 4, 8
+'   Any other value polls the device and returns the current setting
+    curr_gain := 0
+    readreg(core#CONTROL, 1, @curr_gain)
+    case factor
+        1, 2, 4, 8:
+            factor := lookdownz(factor: 1, 2, 4, 8) << core#PGAIN
+        other:
+            curr_gain := (curr_gain >> core#PGAIN) & core#PGAIN_BITS
+            return lookupz(curr_gain: 1, 2, 4, 8)
+
+    factor := (curr_gain & core#PGAIN_MASK) | factor
+    writereg(core#CONTROL, 1, @factor)
 
 PUB ProxIntPersistence(cycles): curr_setting
 ' PERS: PPERS, 0: every, 1: any outside, 2..15=1:1 cycles
