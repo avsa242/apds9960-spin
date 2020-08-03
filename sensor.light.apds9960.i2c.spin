@@ -63,6 +63,7 @@ PUB Defaults{}
     alsintthreshold(0, 0, W)
     integrationtime(2_780)
     proxdetenabled(false)
+    proxintpersistence(0)
     waittimerenabled(false)
 
 PUB DefaultsALS{}
@@ -81,6 +82,7 @@ PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
     proxdetenabled(true)
+    proxintpersistence(0)
     waittimerenabled(false)
 
 PUB DefaultsGest{}
@@ -294,7 +296,24 @@ PUB ProxGain(factor): curr_gain
     writereg(core#CONTROL, 1, @factor)
 
 PUB ProxIntPersistence(cycles): curr_setting
-' PERS: PPERS, 0: every, 1: any outside, 2..15=1:1 cycles
+' Set interrupt persistence, in cycles
+'   Defines how many consecutive measurements must be outside the interrupt threshold
+'   before an interrupt is actually triggered (e.g., to reduce false positives)
+'   Valid values:
+'      *0 - _Every measurement_ triggers an interrupt, _regardless_
+'       1 - Every measurement _outside your set threshold_ triggers an interrupt
+'       2..15 - Must be 'n' consecutive measurements outside the set threshold to trigger an interrupt
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#PERS, 1, @curr_setting)
+    case cycles
+        0..15:
+            cycles <<= core#PPERS
+        other:
+            return (curr_setting >> core#PPERS) & core#PPERS_BITS
+
+    cycles := (curr_setting & core#PPERS_MASK) | cycles
+    writereg(core#PERS, 1, @cycles)
 
 PUB ProxIntsEnabled(state): curr_state
 ' ENABLE: PEN
