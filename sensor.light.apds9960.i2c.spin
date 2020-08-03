@@ -6,7 +6,7 @@
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2020
     Started Aug 02, 2020
-    Updated Aug 02, 2020
+    Updated Aug 03, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -256,11 +256,23 @@ PUB Powered(state): curr_state
 PUB ProxDataReady{}: flag
 ' Flag indicating proximity sensor data is ready
 '   Returns: TRUE (-1) or FALSE (0)
+    flag := 0
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#PVALID) & 1) == 1
 
 PUB ProxDetEnabled(state): curr_state
-' ENABLE: PEN
+' Enable proximity sensing/detection
+'   Valid values: TRUE (-1 or 1), *FALSE (0)
+'   Any other value polls the device and returns the current setting
+    curr_state := 0
+    case ||(state)
+        0, 1:
+            state := ||(state) << core#PEN
+        other:
+            return ((curr_state >> core#PEN) & 1) == 1
+
+    state := (curr_state & core#PEN_MASK) | state
+    writereg(core#ENABLE, 1, @state)
 
 PUB ProxGain(factor): curr_gain
 ' CONTROL: PGAIN: 1, 2, 4, 8
