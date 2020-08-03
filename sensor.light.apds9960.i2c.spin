@@ -65,6 +65,7 @@ PUB Defaults{}
     proxdetenabled(false)
     proxintpersistence(0)
     proxintsenabled(false)
+    proxintthresh(0, 0, W)
     waittimerenabled(false)
 
 PUB DefaultsALS{}
@@ -86,6 +87,7 @@ PUB DefaultsProx{}
     proxdetenabled(true)
     proxintpersistence(0)
     proxintsenabled(true)
+    proxintthresh(0, 0, W)
     waittimerenabled(false)
 
 PUB DefaultsGest{}
@@ -334,7 +336,24 @@ PUB ProxIntsEnabled(state): curr_state
     writereg(core#ENABLE, 1, @state)
 
 PUB ProxIntThresh(low, high, rw): curr_thr
-' PILT, PIHT: 8b ea
+' Set proximity sensor interrupt thresholds
+'   Valid values
+'       low, high: 0..255
+'       rw:
+'           R (0) read current values
+'           W (1) write new values
+'   Any other value polls the device and returns the current setting
+'   NOTE: When reading, low and high must be pointers to byte or larger sized variables
+    case rw
+        R:
+            readreg(core#PILT, 1, low)
+            readreg(core#PIHT, 1, high)
+        W:
+            if lookdown(low: 0..255) and lookdown(high: 0..255)
+                writereg(core#PILT, 1, @low)
+                writereg(core#PIHT, 1, @high)
+
+    return
 
 PUB RedData{}: rdata
 ' Red-channel sensor data
