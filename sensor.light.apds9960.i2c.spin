@@ -278,6 +278,11 @@ PUB Powered(state): curr_state
     state := (curr_state & core#PON_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
+PUB ProxData{}: pdata
+' Read proximity sensor data
+'   Returns: 8bit unsigned
+    readreg(core#PDATA, 1, @pdata)
+
 PUB ProxDataReady{}: flag
 ' Flag indicating proximity sensor data is ready
 '   Returns: TRUE (-1) or FALSE (0)
