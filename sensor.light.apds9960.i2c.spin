@@ -254,7 +254,10 @@ PUB Powered(state): curr_state
     writereg(core#ENABLE, 1, @state)
 
 PUB ProxDataReady{}: flag
-' STATUS: PVALID
+' Flag indicating proximity sensor data is ready
+'   Returns: TRUE (-1) or FALSE (0)
+    readreg(core#STATUS, 1, @flag)
+    return ((flag >> core#PVALID) & 1) == 1
 
 PUB ProxDetEnabled(state): curr_state
 ' ENABLE: PEN
