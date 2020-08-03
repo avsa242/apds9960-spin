@@ -13,6 +13,10 @@ This is a P8X32A/Propeller, ~~P2X8C4M64P/Propeller 2~~ driver object for the APD
 * Set ALS/RGB sensor integration time
 * ALS/RGB interrupt source (with persistence filter, and configurable lo/hi thresholds)
 * Optional inter-measurement (ALS, prox.) low-power wait state with configurable time
+* Proximity sensing _(untested)_
+* Set Proximity sensor gain
+* Set Proximity sensor integration time
+* Proximity interrupt source (with persistence filter, and configurable lo/hi thresholds)
 
 ## Requirements
 
@@ -34,13 +38,14 @@ P1/SPIN1:
 ## Limitations
 
 * Very early in development - may malfunction, or outright fail to build
-* No proximity or gesture sensing support (planned)
+* No gesture sensing support (planned)
 * ALS/Prox. wait timer doesn't support the wait long feature (multiply wait timer duration by x12)
+* Proximity sensing/detection function untested
 
 ## TODO
 
 - [x] ALS/RGB sensing
 - [ ] Long wait timer multiplier
-- [ ] Proximity sensing
+- [ ] Proximity sensing - WIP
 - [ ] Gesture sensing
 - [ ] Port to P2/SPIN2
