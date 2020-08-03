@@ -63,6 +63,7 @@ PUB Defaults{}
     alsintthreshold(0, 0, W)
     integrationtime(2_780)
     proxdetenabled(false)
+    proxintegrationtime(8)
     proxintpersistence(0)
     proxintsenabled(false)
     proxintthresh(0, 0, W)
@@ -85,6 +86,7 @@ PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
     proxdetenabled(true)
+    proxintegrationtime(8)
     proxintpersistence(0)
     proxintsenabled(true)
     proxintthresh(0, 0, W)
@@ -299,6 +301,22 @@ PUB ProxGain(factor): curr_gain
 
     factor := (curr_gain & core#PGAIN_MASK) | factor
     writereg(core#CONTROL, 1, @factor)
+
+PUB ProxIntegrationTime(usecs): curr_setting
+' Set proximity sensor integration time, in microseconds
+'   Valid values: 4, *8, 16, 32
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#PPULSECNT, 1, @curr_setting)
+    case usecs
+        4, 8, 16, 32:
+            usecs := lookdownz(usecs: 4, 8, 16, 32) << core#PPLEN
+        other:
+            curr_setting := (curr_setting >> core#PPLEN) & core#PPLEN_BITS
+            return lookupz(curr_setting: 4, 8, 16, 32)
+
+    usecs := (curr_setting & core#PPLEN_MASK) | usecs
+    writereg(core#PPULSECNT, 1, @usecs)
 
 PUB ProxIntPersistence(cycles): curr_setting
 ' Set interrupt persistence, in cycles
