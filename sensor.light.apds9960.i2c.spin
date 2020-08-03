@@ -86,10 +86,12 @@ PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
     proxdetenabled(true)
+    proxgain(4)
     proxintegrationtime(8)
     proxintpersistence(0)
     proxintsenabled(true)
     proxintthresh(0, 0, W)
+    proxpulsecount(8)
     waittimerenabled(false)
 
 PUB DefaultsGest{}
@@ -390,6 +392,21 @@ PUB ProxIntThresh(low, high, rw): curr_thr
                 writereg(core#PIHT, 1, @high)
 
     return
+
+PUB ProxPulseCount(nr_pulses): curr_setting     'XXX tentatively named
+' Set proximity pulse count, generated on LDR   'XXX tentative summary
+'   Valid values: 1..64
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#PPULSECNT, 1, @curr_setting)
+    case nr_pulses
+        1..64:
+            nr_pulses -= 1
+        other:
+            return (curr_setting & core#PPULSE_BITS) + 1
+
+    nr_pulses := (curr_setting & core#PPULSE_MASK) | nr_pulses
+    writereg(core#PPULSECNT, 1, @nr_pulses)
 
 PUB RedData{}: rdata
 ' Red-channel sensor data
