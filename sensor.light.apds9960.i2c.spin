@@ -245,7 +245,20 @@ PUB IntegrationTime(usecs): curr_setting
             return (256-curr_setting) * 2_780
 
 PUB LEDDriveCurrent(mA): curr_setting
-' CONTROL: LDRIVE: 100, 50, 25, 12.5
+' Set LED drive current, used in Proximity and Gesture sensing modes, in milliamperes
+'   Valid values: *100, 50, 25, 12_5 (12.5)
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#CONTROL, 1, @curr_setting)
+    case mA
+        100, 50, 25, 12_5:
+            mA := lookdownz(mA: 100, 50, 25, 12_5) << core#LDRIVE
+        other:
+            curr_setting := (curr_setting >> core#LDRIVE) & core#LDRIVE_BITS
+            return lookupz(curr_setting: 100, 50, 25, 12_5)
+
+    mA := (curr_setting & core#LDRIVE_MASK) | mA
+    writereg(core#CONTROL, 1, @mA)
 
 PUB OpMode(mode): curr_mode
 ' GCONF4?
