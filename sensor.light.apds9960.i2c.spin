@@ -246,6 +246,19 @@ PUB GesturesEnabled(state): curr_state
     state := (curr_state & core#GEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
+PUB GestureEndThresh(level): curr_lvl
+' Set threshold used to determine if a gesture has ended
+'   Valid values: 0..255
+'   Any other value polls the device and returns the current setting
+'   NOTE: This value is compared with output from ProxData(), to determine if a gesture has started
+    case level
+        0..255:
+            writereg(core#GEXTH, 1, @level)
+        other:
+            curr_lvl := 0
+            readreg(core#GEXTH, 1, @curr_lvl)
+            return
+
 PUB GestureInterrupt{}: flag
 ' Flag indicating gesture interrupt asserted
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
