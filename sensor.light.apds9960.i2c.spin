@@ -231,7 +231,19 @@ PUB GreenData{}: gdata
     readreg(core#GDATAL, 2, @gdata)
 
 PUB GesturesEnabled(state): curr_state
-' ENABLE: GEN
+' Enable gesture sensing
+'   Valid values: TRUE (-1 or 1), *FALSE (0)
+'   Any other value polls the device and returns the current setting
+    curr_state := 0
+    readreg(core#ENABLE, 1, @curr_state)
+    case ||(state)
+        0, 1:
+            state := ||(state) << core#GEN
+        other:
+            return ((curr_state >> core#GEN) & 1) == 1
+
+    state := (curr_state & core#GEN_MASK) | state
+    writereg(core#ENABLE, 1, @state)
 
 PUB IntegrationTime(usecs): curr_setting
 ' Set ALS integration time, in microseconds
