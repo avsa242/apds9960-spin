@@ -429,6 +429,22 @@ PUB RedData{}: rdata
 PUB Reset{}
 ' Reset the device
 
+PUB SleepAfterInts(enable): curr_setting
+' Enter low power mode when an interrupt is asserted
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the device and returns the current setting
+'   NOTE: To return to normal operating mode, clear the interrupt
+    curr_setting := 0
+    readreg(core#CONFIG3, 1, @curr_setting)
+    case ||(enable)
+        0, 1:
+            enable := ||(enable) << core#SAI
+        other:
+            curr_setting := ((curr_setting >> core#SAI) & 1) == 1
+
+    enable := (curr_setting & core#SAI_MASK) | enable
+    writereg(core#CONFIG3, 1, @enable)
+
 PUB WaitTime(usecs): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in microseconds
 '   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
