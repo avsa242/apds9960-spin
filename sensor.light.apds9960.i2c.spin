@@ -98,6 +98,7 @@ PUB DefaultsProx{}
 PUB DefaultsGest{}
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
+    gesturesenabled(true)
 
 PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
 ' All ambient light source data
@@ -244,6 +245,12 @@ PUB GesturesEnabled(state): curr_state
 
     state := (curr_state & core#GEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
+
+PUB GestureInterrupt{}: flag
+' Flag indicating gesture interrupt asserted
+'   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
+    readreg(core#STATUS, 1, @flag)
+    return ((flag >> core#GINT) & 1) == 1
 
 PUB IntegrationTime(usecs): curr_setting
 ' Set ALS integration time, in microseconds
