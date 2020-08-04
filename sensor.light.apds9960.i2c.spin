@@ -325,7 +325,7 @@ PUB ProxGain(factor): curr_gain
     writereg(core#CONTROL, 1, @factor)
 
 PUB ProxIntClear{}
-
+' Clear proximity sensor interrupt
     writereg(core#PICLEAR, 0, 0)
 
 PUB ProxIntegrationTime(usecs): curr_setting
