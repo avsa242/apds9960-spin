@@ -324,6 +324,10 @@ PUB ProxGain(factor): curr_gain
     factor := (curr_gain & core#PGAIN_MASK) | factor
     writereg(core#CONTROL, 1, @factor)
 
+PUB ProxIntClear{}
+
+    writereg(core#PICLEAR, 0, 0)
+
 PUB ProxIntegrationTime(usecs): curr_setting
 ' Set proximity sensor integration time, in microseconds
 '   Valid values: 4, *8, 16, 32
@@ -339,6 +343,12 @@ PUB ProxIntegrationTime(usecs): curr_setting
 
     usecs := (curr_setting & core#PPLEN_MASK) | usecs
     writereg(core#PPULSECNT, 1, @usecs)
+
+PUB ProxInterrupt{}: flag
+' Flag indicating proximity sensor interrupt
+'   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
+    readreg(core#STATUS, 1, @flag)
+    return ((flag >> core#PINT) & 1) == 1
 
 PUB ProxIntPersistence(cycles): curr_setting
 ' Set interrupt persistence, in cycles
@@ -474,8 +484,13 @@ PRI writeReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
         core#CONFIG2:
             byte[buff_addr][0] |= 1                         ' APDS9960: Reserved bit that must always be set
 
-        core#IFORCE..core#AICLEAR:
-
+        core#IFORCE..core#AICLEAR:                          ' Commands with no parameters
+            cmd_packet.byte[0] := SLAVE_WR
+            cmd_packet.byte[1] := reg_nr
+            i2c.start{}
+            i2c.wr_block (@cmd_packet, 2)
+            i2c.stop{}
+            return
         OTHER:
             return
 
