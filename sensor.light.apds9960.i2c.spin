@@ -6,7 +6,7 @@
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2020
     Started Aug 02, 2020
-    Updated Aug 03, 2020
+    Updated Aug 04, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -85,6 +85,7 @@ PUB DefaultsALS{}
 PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
+    alsenabled(false)
     proxdetenabled(true)
     proxgain(4)
     proxintegrationtime(8)
@@ -297,6 +298,7 @@ PUB ProxDetEnabled(state): curr_state
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
     curr_state := 0
+    readreg(core#ENABLE, 1, @curr_state)
     case ||(state)
         0, 1:
             state := ||(state) << core#PEN
