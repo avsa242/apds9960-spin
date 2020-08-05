@@ -311,6 +311,12 @@ PUB GestureGain(factor): curr_setting
     factor := (curr_setting & core#GGAIN_MASK) | factor
     writereg(core#GCONF2, 1, @factor)
 
+PUB GestureIntClear{} | tmp
+' Clear gesture-sourced interrupts
+    readreg(core#GCONF4, 1, @tmp)
+    tmp |= (1 << core#GFIFO_CLR)
+    writereg(core#GCONF4, 1, @tmp)
+
 PUB GestureInterrupt{}: flag
 ' Flag indicating gesture interrupt asserted
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
