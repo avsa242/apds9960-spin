@@ -101,6 +101,7 @@ PUB DefaultsGest{}
     gestledcurrent(100)
     gesturegain(1)
     gesturesenabled(true)
+    gestwaittime(0)
 
 PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
 ' All ambient light source data
@@ -311,6 +312,23 @@ PUB GestureStartThresh(level): curr_lvl
             curr_lvl := 0
             readreg(core#GPENTH, 1, @curr_lvl)
             return
+
+PUB GestWaitTime(msecs): curr_setting
+' Set inter-measurement wait timer (low-power mode between measurements), in milliseconds
+'   Valid values: *0, 2_8 (2.8), 5_6 (5.6), 8_4 (8.4), 14_0 (14.0), 22_4 (22.4), 30_8 (30.8), 39_2 (39.2)
+'   Any other value polls the device and returns the current setting
+'   NOTE: This setting only applies to the Gesture engine. The proximity and ALS engines are not affected.
+    curr_setting := 0
+    readreg(core#GCONF2, 1, @curr_setting)
+    case msecs
+        0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2:
+            msecs := lookdownz(msecs: 0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2)
+        other:
+            curr_setting := curr_setting & core#GWTIME_BITS
+            return lookupz(curr_setting: 0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2)
+
+    msecs := (curr_setting & core#GWTIME_MASK) | msecs
+    writereg(core#GCONF2, 1, @msecs)
 
 PUB IntegrationTime(usecs): curr_setting
 ' Set ALS integration time, in microseconds

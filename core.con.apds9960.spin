@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2020
     Started Aug 02, 2020
-    Updated Aug 02, 2020
+    Updated Aug 05, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -155,7 +155,7 @@ CON
         GWTIME          = 0
         GGAIN_BITS      = %11
         GLDRIVE_BITS    = %11
-        GWTIME_BITS     = %11
+        GWTIME_BITS     = %111
         GGAIN_MASK      = GCONF2_MASK ^ (GGAIN_BITS << GGAIN)
         GLDRIVE_MASK    = GCONF2_MASK ^ (GLDRIVE_BITS << GLDRIVE)
         GWTIME_MASK     = GCONF2_MASK ^ (GWTIME_BITS << GWTIME)
