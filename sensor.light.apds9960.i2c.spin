@@ -283,6 +283,12 @@ PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
     nr_pulses := (curr_setting & core#GPULSE_MASK) | nr_pulses
     writereg(core#GPULSECNT, 1, @nr_pulses)
 
+PUB GestureDataReady{}: flag
+' Flag indicating gesture FIFO contains valid data
+'   NOTE: Flag will be set when FIFO level exceeds threshold set with GestureFIFOThresh()
+    readreg(core#GSTATUS, 1, @flag)
+    flag := (flag & 1) == 1
+
 PUB GesturesEnabled(state): curr_state
 ' Enable gesture sensing
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
