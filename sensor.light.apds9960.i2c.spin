@@ -98,6 +98,7 @@ PUB DefaultsProx{}
 PUB DefaultsGest{}
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
+    gesturegain(1)
     gesturesenabled(true)
 
 PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
@@ -258,6 +259,22 @@ PUB GestureEndThresh(level): curr_lvl
             curr_lvl := 0
             readreg(core#GEXTH, 1, @curr_lvl)
             return
+
+PUB GestureGain(factor): curr_setting
+' Set proximity sensor gain in gesture mode
+'   Valid values: *1, 2, 4, 8
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#GCONF2, 1, @curr_setting)
+    case factor
+        1, 2, 4, 8:
+            factor := lookdownz(factor: 1, 2, 4, 8) << core#GGAIN
+        other:
+            curr_setting := (curr_setting >> core#GGAIN) & core#GGAIN_BITS
+            return lookupz(curr_setting: 1, 2, 4, 8)
+
+    factor := (curr_setting & core#GGAIN_MASK) | factor
+    writereg(core#GCONF2, 1, @factor)
 
 PUB GestureInterrupt{}: flag
 ' Flag indicating gesture interrupt asserted
