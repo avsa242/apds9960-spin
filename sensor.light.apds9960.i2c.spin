@@ -98,6 +98,7 @@ PUB DefaultsProx{}
 PUB DefaultsGest{}
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
+    gestledcurrent(100)
     gesturegain(1)
     gesturesenabled(true)
 
@@ -232,6 +233,22 @@ PUB GreenData{}: gdata
     gdata := 0
     readreg(core#GDATAL, 2, @gdata)
 
+PUB GestLEDCurrent(mA): curr_setting
+' Set LED drive current in gesture mode, in milliamperes
+'   Valid values: *100, 50, 25, 12_5 (12.5)
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#GCONF2, 1, @curr_setting)
+    case mA
+        100, 50, 25, 12_5:
+            mA := lookdownz(mA: 100, 50, 25, 12_5) << core#GLDRIVE
+        other:
+            curr_setting := (curr_setting >> core#GLDRIVE) & core#GLDRIVE_BITS
+            return lookupz (curr_setting: 100, 50, 25, 12_5)
+
+    mA := (curr_setting & core#GLDRIVE_MASK) | mA
+    writereg(core#GCONF2, 1, @mA)
+
 PUB GesturesEnabled(state): curr_state
 ' Enable gesture sensing
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
@@ -309,7 +326,7 @@ PUB IntegrationTime(usecs): curr_setting
             readreg(core#ATIME, 1, @curr_setting)
             return (256-curr_setting) * 2_780
 
-PUB LEDDriveCurrent(mA): curr_setting
+PUB LEDCurrent(mA): curr_setting
 ' Set LED drive current, used in Proximity and Gesture sensing modes, in milliamperes
 '   Valid values: *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
