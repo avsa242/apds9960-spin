@@ -98,6 +98,7 @@ PUB DefaultsProx{}
 PUB DefaultsGest{}
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
+    gestendpersistence(1)
     gestledcurrent(100)
     gestpulsecount(1)
     gesturefifothresh(1)
@@ -282,6 +283,21 @@ PUB GesturesEnabled(state): curr_state
 
     state := (curr_state & core#GEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
+
+PUB GestEndPersistence(cycles): curr_setting
+' Set gesture exit persistence filter (number of gesture end occurences before gesture state machine is exited) 'XXX tentative summary
+'   Valid values: 1, 2, 4, 7
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#GCONF1, 1, @curr_setting)
+    case cycles
+        1, 2, 4, 7:
+            cycles := lookdownz(cycles: 1, 2, 4, 7)
+        other:
+            return lookupz(curr_setting: 1, 2, 4, 7)
+
+    cycles := (curr_setting & core#GEXPERS_MASK) | cycles
+    writereg(core#GCONF1, 1, @cycles)
 
 PUB GestureEndThresh(level): curr_lvl
 ' Set threshold used to determine if a gesture has ended
