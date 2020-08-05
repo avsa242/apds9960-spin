@@ -100,6 +100,7 @@ PUB DefaultsGest{}
     powered(true)
     gestledcurrent(100)
     gestpulsecount(1)
+    gesturefifothresh(1)
     gesturegain(1)
     gestureintsenabled(true)
     gesturesenabled(true)
@@ -294,6 +295,22 @@ PUB GestureEndThresh(level): curr_lvl
             curr_lvl := 0
             readreg(core#GEXTH, 1, @curr_lvl)
             return
+
+PUB GestureFIFOThresh(level): curr_thr
+' Set gesture FIFO threshold for asserting an interrupt
+'   Valid values: *1, 4, 8, 16
+'   Any other value polls the device and returns the current setting
+    curr_thr := 0
+    readreg(core#GCONF1, 1, @curr_thr)
+    case level
+        1, 4, 8, 16:
+            level := lookdownz(level: 1, 4, 8, 16) << core#GFIFOTH
+        other:
+            curr_thr := (curr_thr >> core#GFIFOTH) & core#GFIFOTH_BITS
+            return lookupz(curr_thr: 1, 4, 8, 16)
+
+    level := (curr_thr & core#GFIFOTH_MASK) | level
+    writereg(core#GCONF1, 1, @level)
 
 PUB GestureGain(factor): curr_setting
 ' Set proximity sensor gain in gesture mode
