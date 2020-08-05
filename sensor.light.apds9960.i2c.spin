@@ -246,6 +246,12 @@ PUB GreenData{}: gdata
     gdata := 0
     readreg(core#GDATAL, 2, @gdata)
 
+PUB GestFIFOOverflow{}: flag
+' Flag indicating gesture FIFO has overflowed
+'   Returns: TRUE (-1) if FIFO overflowed (data has been lost), FALSE (0) otherwise
+    readreg(core#GSTATUS, 1, @flag)
+    flag := ((flag >> core#GFOV) & 1) == 1
+
 PUB GestLEDCurrent(mA): curr_setting
 ' Set LED drive current in gesture mode, in milliamperes
 '   Valid values: *100, 50, 25, 12_5 (12.5)
