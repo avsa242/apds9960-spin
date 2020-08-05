@@ -24,6 +24,10 @@ CON
     R               = 0
     W               = 1
 
+' Gesture sensor modes
+    ALS             = 0
+    GEST            = 1
+
 OBJ
 
     i2c : "com.i2c"                                             'PASM I2C Driver
@@ -61,6 +65,7 @@ PUB Defaults{}
     alsintsenabled(false)
     alsintpersistence(0)
     alsintthreshold(0, 0, W)
+    gesturemode(ALS)
     integrationtime(2_780)
     proxdetenabled(false)
     proxintegrationtime(8)
@@ -77,6 +82,7 @@ PUB DefaultsALS{}
     alsintsenabled(true)
     alsintpersistence(0)
     alsintthreshold(0, 0, W)
+    gesturemode(ALS)
     integrationtime(2_780)
     proxdetenabled(false)
     proxintsenabled(false)
@@ -86,6 +92,7 @@ PUB DefaultsProx{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
     alsenabled(false)
+    gesturemode(ALS)
     proxdetenabled(true)
     proxgain(4)
     proxintegrationtime(8)
@@ -104,6 +111,7 @@ PUB DefaultsGest{}
     gesturefifothresh(1)
     gesturegain(1)
     gestureintsenabled(true)
+    gesturemode(GEST)
     gesturesenabled(true)
     gestwaittime(0)
 
@@ -370,6 +378,22 @@ PUB GestureIntsEnabled(state): curr_state
 
     state := (curr_state & core#GIEN_MASK) | state
     writereg(core#GCONF4, 1, @state)
+
+PUB GestureMode(mode): curr_mode
+' Set gesture sensor operating mode
+'   Valid values:
+'       ALS (0): ALS/Proximity/RGB mode
+'       GEST (1): Gesture mode
+'   Any other value polls the device and rturns the current setting
+    curr_mode := 0
+    readreg(core#GCONF4, 1, @curr_mode)
+    case mode
+        ALS, GEST:
+        other:
+            return curr_mode & 1
+
+    mode := (curr_mode & core#GMODE_MASK) | mode
+    writereg(core#GCONF4, 1, @mode)
 
 PUB GestureStartThresh(level): curr_lvl
 ' Set threshold used to determine if a gesture has started
