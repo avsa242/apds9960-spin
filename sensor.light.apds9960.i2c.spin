@@ -101,6 +101,7 @@ PUB DefaultsGest{}
     gestledcurrent(100)
     gestpulsecount(1)
     gesturegain(1)
+    gestureintsenabled(true)
     gesturesenabled(true)
     gestwaittime(0)
 
@@ -315,6 +316,21 @@ PUB GestureInterrupt{}: flag
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#GINT) & 1) == 1
+
+PUB GestureIntsEnabled(state): curr_state
+' Enable gesture sensor interrupt source
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the device and rturns the current setting
+    curr_state := 0
+    readreg(core#GCONF4, 1, @curr_state)
+    case ||(state)
+        0, 1:
+            state := ||(state) << core#GIEN
+        other:
+            return ((curr_state >> core#GIEN) & 1) == 1
+
+    state := (curr_state & core#GIEN_MASK) | state
+    writereg(core#GCONF4, 1, @state)
 
 PUB GestureStartThresh(level): curr_lvl
 ' Set threshold used to determine if a gesture has started
