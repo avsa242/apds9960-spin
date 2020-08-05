@@ -99,6 +99,7 @@ PUB DefaultsGest{}
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
     gestledcurrent(100)
+    gestpulsecount(1)
     gesturegain(1)
     gesturesenabled(true)
     gestwaittime(0)
@@ -249,6 +250,21 @@ PUB GestLEDCurrent(mA): curr_setting
 
     mA := (curr_setting & core#GLDRIVE_MASK) | mA
     writereg(core#GCONF2, 1, @mA)
+
+PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
+' Set gesture LED pulse count, generated on LDR 'XXX tentative summary
+'   Valid values: 1..64
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#GPULSECNT, 1, @curr_setting)
+    case nr_pulses
+        1..64:
+            nr_pulses -= 1
+        other:
+            return (curr_setting & core#GPULSE_BITS) + 1
+
+    nr_pulses := (curr_setting & core#GPULSE_MASK) | nr_pulses
+    writereg(core#GPULSECNT, 1, @nr_pulses)
 
 PUB GesturesEnabled(state): curr_state
 ' Enable gesture sensing
