@@ -252,6 +252,12 @@ PUB GreenData{}: gdata
     gdata := 0
     readreg(core#GDATAL, 2, @gdata)
 
+PUB GestFIFOUnreadSamples{}: nr_samples
+' Number of samples available in FIFO
+'   Returns: 8-bit unsigned
+'   NOTE: One sample is a complete set of U, D, L, R data. To reduce the level reported here, a complete dataset must be read
+    readreg(core#GFLVL, 1, @nr_samples)
+
 PUB GestFIFOOverflow{}: flag
 ' Flag indicating gesture FIFO has overflowed
 '   Returns: TRUE (-1) if FIFO overflowed (data has been lost), FALSE (0) otherwise
@@ -300,12 +306,12 @@ PUB GestureData(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
 
 PUB GestureDataDown{}: data
 ' Gesture sensor down direction data
-'   Returns: 8b unsigned
+'   Returns: 8-bit unsigned
     readreg(core#GFIFO_D, 1, @data)
 
 PUB GestureDataLeft{}: data
 ' Gesture sensor left direction data
-'   Returns: 8b unsigned
+'   Returns: 8-bit unsigned
     readreg(core#GFIFO_L, 1, @data)
 
 PUB GestureDataReady{}: flag
@@ -316,12 +322,12 @@ PUB GestureDataReady{}: flag
 
 PUB GestureDataRight{}: data
 ' Gesture sensor right direction data
-'   Returns: 8b unsigned
+'   Returns: 8-bit unsigned
     readreg(core#GFIFO_R, 1, @data)
 
 PUB GestureDataUp{}: data
 ' Gesture sensor up direction data
-'   Returns: 8b unsigned
+'   Returns: 8-bit unsigned
     readreg(core#GFIFO_U, 1, @data)
 
 PUB GestureDims(dim_select): curr_setting
