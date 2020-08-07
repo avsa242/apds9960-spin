@@ -28,6 +28,11 @@ CON
     ALS             = 0
     GEST            = 1
 
+' Gesture sensor dimension select
+    BOTH            = 0
+    UPDOWN          = 1
+    LEFTRIGHT       = 2
+
 OBJ
 
     i2c : "com.i2c"                                             'PASM I2C Driver
@@ -108,6 +113,7 @@ PUB DefaultsGest{}
     gestendpersistence(1)
     gestledcurrent(100)
     gestpulsecount(1)
+    gesturedims(BOTH)
     gesturefifothresh(1)
     gesturegain(1)
     gestureintsenabled(true)
@@ -317,6 +323,21 @@ PUB GestureDataUp{}: data
 ' Gesture sensor up direction data
 '   Returns: 8b unsigned
     readreg(core#GFIFO_U, 1, @data)
+
+PUB GestureDims(dim_select): curr_setting
+' Select which sensor pairs are used to detect gestures
+'   Valid values:
+'       BOTH (0): Both Up/Down and Left/Right sensors active
+'       UPDOWN (1): Only the Up/Down sensor is active (Right/Left FIFO data always 0)
+'       LEFTRIGHT (2): Only the Left/Right sensor is active (Up/Down FIFO data always 0)
+'   Any other value polls the device and returns the current setting
+    case (dim_select &= core#GCONF3_MASK)
+        BOTH, UPDOWN, LEFTRIGHT:
+            writereg(core#GCONF3, 1, @dim_select)
+        other:
+            curr_setting := 0
+            readreg(core#GCONF3, 1, @curr_setting)
+            return (curr_setting & core#GDIMS_BITS)
 
 PUB GesturesEnabled(state): curr_state
 ' Enable gesture sensing
