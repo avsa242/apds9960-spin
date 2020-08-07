@@ -295,6 +295,22 @@ PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
     nr_pulses := (curr_setting & core#GPULSE_MASK) | nr_pulses
     writereg(core#GPULSECNT, 1, @nr_pulses)
 
+PUB GestPulseLen(usec): curr_setting
+' Set gesture LED pulse length, generated on LDR, in microseconds 'XXX tentative summary
+'   Valid values: 4, *8, 16, 32
+'   Any other value polls the device and returns the current setting
+    curr_setting := 0
+    readreg(core#GPULSECNT, 1, @curr_setting)
+    case usec
+        4, 8, 16, 32:
+            usec := lookdownz(usec: 4, 8, 16, 32) << core#GPLEN
+        other:
+            curr_setting := (curr_setting >> core#GPLEN) & core#GPLEN_BITS
+            return lookupz(curr_setting: 4, 8, 16, 32)
+
+    usec := (curr_setting & core#GPLEN_MASK) | usec
+    writereg(core#GPULSECNT, 1, @usec)
+
 PUB GestureData(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
 ' All gesture sensor source data
 '   ptr_u, ptr_d, ptr_l, ptr_r: pointers at least 1 byte in size, each
@@ -318,7 +334,7 @@ PUB GestureDataReady{}: flag
 ' Flag indicating gesture FIFO contains valid data
 '   NOTE: Flag will be set when FIFO level exceeds threshold set with GestureFIFOThresh()
     readreg(core#GSTATUS, 1, @flag)
-    flag := (flag & 1) == 1
+    return (flag & 1) == 1
 
 PUB GestureDataRight{}: data
 ' Gesture sensor right direction data
