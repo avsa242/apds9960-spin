@@ -283,11 +283,40 @@ PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
     nr_pulses := (curr_setting & core#GPULSE_MASK) | nr_pulses
     writereg(core#GPULSECNT, 1, @nr_pulses)
 
+PUB GestureData(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
+' All gesture sensor source data
+'   ptr_u, ptr_d, ptr_l, ptr_r: pointers at least 1 byte in size, each
+    readreg(core#GFIFO_U, 4, @tmp)
+    long[ptr_u] := tmp.byte[0]
+    long[ptr_d] := tmp.byte[1]
+    long[ptr_l] := tmp.byte[2]
+    long[ptr_r] := tmp.byte[3]
+
+PUB GestureDataDown{}: data
+' Gesture sensor down direction data
+'   Returns: 8b unsigned
+    readreg(core#GFIFO_D, 1, @data)
+
+PUB GestureDataLeft{}: data
+' Gesture sensor left direction data
+'   Returns: 8b unsigned
+    readreg(core#GFIFO_L, 1, @data)
+
 PUB GestureDataReady{}: flag
 ' Flag indicating gesture FIFO contains valid data
 '   NOTE: Flag will be set when FIFO level exceeds threshold set with GestureFIFOThresh()
     readreg(core#GSTATUS, 1, @flag)
     flag := (flag & 1) == 1
+
+PUB GestureDataRight{}: data
+' Gesture sensor right direction data
+'   Returns: 8b unsigned
+    readreg(core#GFIFO_R, 1, @data)
+
+PUB GestureDataUp{}: data
+' Gesture sensor up direction data
+'   Returns: 8b unsigned
+    readreg(core#GFIFO_U, 1, @data)
 
 PUB GesturesEnabled(state): curr_state
 ' Enable gesture sensing
