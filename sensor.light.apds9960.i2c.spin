@@ -6,7 +6,7 @@
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2020
     Started Aug 02, 2020
-    Updated Aug 04, 2020
+    Updated Aug 07, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
