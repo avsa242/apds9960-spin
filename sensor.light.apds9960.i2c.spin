@@ -6,7 +6,7 @@
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2020
     Started Aug 02, 2020
-    Updated Aug 07, 2020
+    Updated Aug 08, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -264,21 +264,31 @@ PUB GestFIFOOverflow{}: flag
     readreg(core#GSTATUS, 1, @flag)
     flag := ((flag >> core#GFOV) & 1) == 1
 
-PUB GestLEDCurrent(mA): curr_setting
+PUB GestLEDCurrent(mA): curr_setting | ledboost
 ' Set LED drive current in gesture mode, in milliamperes
-'   Valid values: *100, 50, 25, 12_5 (12.5)
+'   Valid values: 300, 200, 150, *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
     curr_setting := 0
-    readreg(core#GCONF2, 1, @curr_setting)
+    readreg(core#GCONF2, 1, @curr_setting.byte[0])
+    readreg(core#CONFIG2, 1, @curr_setting.byte[1])
     case mA
         100, 50, 25, 12_5:
             mA := lookdownz(mA: 100, 50, 25, 12_5) << core#GLDRIVE
+        150, 200, 300:
+            mA := 0
+            ledboost := lookdown(mA: 150, 200, 300)
         other:
-            curr_setting := (curr_setting >> core#GLDRIVE) & core#GLDRIVE_BITS
-            return lookupz (curr_setting: 100, 50, 25, 12_5)
+            curr_setting.byte[0] := (curr_setting.byte[0] >> core#GLDRIVE) & core#GLDRIVE_BITS
+            curr_setting.byte[1] := (curr_setting.byte[1] >> core#LED_BOOST) & core#LED_BOOST_BITS
+            if curr_setting.byte[1]
+                return lookdown(curr_setting.byte[1]: 150, 200, 300)
+            else
+                return lookupz(curr_setting.byte[0]: 100, 50, 25, 12_5)
 
-    mA := (curr_setting & core#GLDRIVE_MASK) | mA
+    mA := (curr_setting.byte[0] & core#GLDRIVE_MASK) | mA
+    ledboost := (curr_setting.byte[1] & core#LEDBOOST_MASK) | ledboost
     writereg(core#GCONF2, 1, @mA)
+    writereg(core#CONFIG2, 1, @ledboost)
 
 PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
 ' Set gesture LED pulse count, generated on LDR 'XXX tentative summary
