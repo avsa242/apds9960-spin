@@ -120,6 +120,8 @@ PUB DefaultsGest{}
     gesturemode(GEST)
     gesturesenabled(true)
     gestwaittime(0)
+    gesturestartthresh(0)
+    gestureendthresh(0)
 
 PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
 ' All ambient light source data
@@ -325,10 +327,10 @@ PUB GestureData(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
 ' All gesture sensor source data
 '   ptr_u, ptr_d, ptr_l, ptr_r: pointers at least 1 byte in size, each
     readreg(core#GFIFO_U, 4, @tmp)
-    long[ptr_u] := tmp.byte[0]
-    long[ptr_d] := tmp.byte[1]
-    long[ptr_l] := tmp.byte[2]
-    long[ptr_r] := tmp.byte[3]
+    byte[ptr_u] := tmp.byte[0]
+    byte[ptr_d] := tmp.byte[1]
+    byte[ptr_l] := tmp.byte[2]
+    byte[ptr_r] := tmp.byte[3]
 
 PUB GestureDataDown{}: data
 ' Gesture sensor down direction data
