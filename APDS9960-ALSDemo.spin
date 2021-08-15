@@ -13,6 +13,7 @@
 ' Uncomment one of the below lines to choose the SPIN or PASM-based I2C engine
 #define APDS9960_SPIN
 '#define APDS9960_PASM
+
 CON
 
     _clkmode    = cfg#_clkmode
@@ -20,8 +21,6 @@ CON
 
 ' -- User-modifiable constants
     LED         = cfg#LED1
-    SER_RX      = 31
-    SER_TX      = 30
     SER_BAUD    = 115_200
 
     I2C_SCL     = 28
@@ -34,12 +33,7 @@ OBJ
     cfg     : "core.con.boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
-    io      : "io"
     apds    : "sensor.light.apds9960.i2c"
-
-VAR
-
-    byte _ser_cog
 
 PUB Main{} | c, r, g, b
 
@@ -57,31 +51,24 @@ PUB Main{} | c, r, g, b
 '        r := apds.reddata{}
 '        g := apds.greendata{}
 '        b := apds.bluedata{}
-        ser.position(0, 5)
-        ser.printf(string("Clear: %x\nRed:   %x\nGreen: %x\nBlue:  %x\n"), c, r, g, b, 0, 0)
-
-    flashled(LED, 100)
+        ser.position(0, 3)
+        ser.printf4(string("Clear: %x\nRed:   %x\nGreen: %x\nBlue:  %x\n"), c, r, g, b)
 
 PUB Setup{}
 
-    repeat until ser.startrxtx (SER_RX, SER_TX, 0, SER_BAUD)
+    ser.start(SER_BAUD)
     time.msleep(30)
     ser.clear{}
-    ser.str(string("Serial terminal started", ser#CR, ser#LF))
+    ser.strln(string("Serial terminal started"))
     if apds.startx(I2C_SCL, I2C_SDA, I2C_HZ)
 #ifdef APDS9960_SPIN
-        ser.str(string("APDS9960 driver started (I2C-SPIN)", ser#CR, ser#LF))
+        ser.strln(string("APDS9960 driver started (I2C-SPIN)"))
 #elseifdef APDS9960_PASM
-        ser.str(string("APDS9960 driver started (I2C-PASM)", ser#CR, ser#LF))
+        ser.strln(string("APDS9960 driver started (I2C-PASM)"))
 #endif
     else
-        ser.str(string("APDS9960 driver failed to start - halting", ser#CR, ser#LF))
-        apds.stop{}
-        time.msleep(50)
-        ser.stop{}
-        flashled(LED, 500)
-
-#include "lib.utility.spin"
+        ser.strln(string("APDS9960 driver failed to start - halting"))
+        repeat
 
 DAT
 {
