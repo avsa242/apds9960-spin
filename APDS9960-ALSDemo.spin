@@ -4,13 +4,15 @@
     Author: Jesse Burt
     Description: Demo of the APDS9960 driver
         (ALS functionality)
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Aug 02, 2020
-    Updated Aug 02, 2020
+    Updated Aug 15, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
-
+' Uncomment one of the below lines to choose the SPIN or PASM-based I2C engine
+#define APDS9960_SPIN
+'#define APDS9960_PASM
 CON
 
     _clkmode    = cfg#_clkmode
@@ -67,7 +69,11 @@ PUB Setup{}
     ser.clear{}
     ser.str(string("Serial terminal started", ser#CR, ser#LF))
     if apds.startx(I2C_SCL, I2C_SDA, I2C_HZ)
-        ser.str(string("APDS9960 driver started", ser#CR, ser#LF))
+#ifdef APDS9960_SPIN
+        ser.str(string("APDS9960 driver started (I2C-SPIN)", ser#CR, ser#LF))
+#elseifdef APDS9960_PASM
+        ser.str(string("APDS9960 driver started (I2C-PASM)", ser#CR, ser#LF))
+#endif
     else
         ser.str(string("APDS9960 driver failed to start - halting", ser#CR, ser#LF))
         apds.stop{}

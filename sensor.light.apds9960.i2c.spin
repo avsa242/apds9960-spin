@@ -4,9 +4,9 @@
     Author: Jesse Burt
     Description: Driver for the Allegro APDS9960 Proximity,
         Ambient Light, RGB and Gesture sensor
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Aug 02, 2020
-    Updated Aug 08, 2020
+    Updated Aug 15, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -35,32 +35,40 @@ CON
 
 OBJ
 
-    i2c : "com.i2c"                                             'PASM I2C Driver
-    core: "core.con.apds9960.spin"                       'File containing your device's register set
+#ifdef APDS9960_PASM
+    i2c : "com.i2c"                             ' PASM I2C engine (~400kHz)
+#elseifdef APDS9960_SPIN
+    i2c : "tiny.com.i2c"                        ' SPIN I2C engine (~30kHz)
+#else
+#error "One of APDS9960_PASM or APDS9960_SPIN must be defined"
+#endif
+    core: "core.con.apds9960"                       'File containing your device's register set
     time: "time"                                                'Basic timing functions
 
 PUB Null{}
 ''This is not a top-level object
 
-PUB Start{}: okay                                                 'Default to "standard" Propeller I2C pins and 400kHz
+PUB Start{}: status
+' Start using "standard" Propeller I2C pins and 100kHz
+    return startx(DEF_SCL, DEF_SDA, DEF_HZ)
 
-    okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ)
-
-PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ): okay
-
-    if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
-        if I2C_HZ =< core#I2C_MAX_FREQ
-            if okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)    'I2C Object Started?
-                time.msleep(core#TPOR)
-                if i2c.present(SLAVE_WR)                        'Response from device?
-                    if deviceid{} == core#DEVID_RESP
-                        return
-
-    return FALSE                                                'If we got here, something went wrong
+PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ): status
+' Start using custom I/O settings
+    if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) and {
+}   I2C_HZ =< core#I2C_MAX_FREQ                 ' validate I/O pins and freq
+        if (status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ))
+            time.msleep(core#TPOR)
+            if i2c.present(SLAVE_WR)            ' test device bus presence
+                if deviceid{} == core#DEVID_RESP
+                    return
+    ' if this point is reached, something above failed
+    ' Double check I/O pin assignments, connections, power
+    ' Lastly - make sure you have at least one free core/cog
+    return FALSE
 
 PUB Stop{}
 ' Put any other housekeeping code here required/recommended by your device before shutting down
-    i2c.terminate
+    i2c.deinit{}
 
 PUB Defaults{}
 ' Set factory/POR defaults
@@ -420,6 +428,7 @@ PUB GestureFIFOThresh(level): curr_thr
 ' Set gesture FIFO threshold for asserting an interrupt
 '   Valid values: *1, 4, 8, 16
 '   Any other value polls the device and returns the current setting
+'   NOTE: Gesture data is only added to the FIFO if it reaches or exceeds the threshold set with GestureStartThresh()
     curr_thr := 0
     readreg(core#GCONF1, 1, @curr_thr)
     case level
@@ -766,19 +775,17 @@ PRI readReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
 ' Read nr_bytes from the slave device
     case reg_nr                                             ' Basic register validation
         core#CDATAL, core#RDATAL, core#GDATAL, core#BDATAL, core#PDATA:
-
         core#RAM..core#ATIME, core#WTIME..core#AIHTH, core#PILT, core#PIHT..core#CONFIG2, core#DEVICEID..core#STATUS, core#POFFSET_UR..core#GOFFSET_L, core#GOFFSET_R..core#GCONF4, core#GFLVL, core#GSTATUS, core#GFIFO_U..core#GFIFO_R:
-
-        OTHER:
+        other:
             return
 
     cmd_packet.byte[0] := SLAVE_WR
     cmd_packet.byte[1] := reg_nr
     i2c.start{}
-    i2c.wr_block (@cmd_packet, 2)
+    i2c.wrblock_lsbf(@cmd_packet, 2)
     i2c.start{}
     i2c.write (SLAVE_RD)
-    i2c.rd_block (buff_addr, nr_bytes, TRUE)
+    i2c.rdblock_lsbf(buff_addr, nr_bytes, i2c#NAK)
     i2c.stop{}
 
 PRI writeReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
@@ -787,23 +794,21 @@ PRI writeReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
         core#RAM..core#ATIME, core#WTIME..core#AIHTH, core#PILT, core#PIHT, core#PERS..core#CONTROL, core#POFFSET_UR..core#GOFFSET_L, core#GOFFSET_R..core#GCONF4:
         core#CONFIG2:
             byte[buff_addr][0] |= 1                         ' APDS9960: Reserved bit that must always be set
-
         core#IFORCE..core#AICLEAR:                          ' Commands with no parameters
             cmd_packet.byte[0] := SLAVE_WR
             cmd_packet.byte[1] := reg_nr
             i2c.start{}
-            i2c.wr_block (@cmd_packet, 2)
+            i2c.wrblock_lsbf(@cmd_packet, 2)
             i2c.stop{}
             return
-        OTHER:
+        other:
             return
 
     cmd_packet.byte[0] := SLAVE_WR
     cmd_packet.byte[1] := reg_nr
     i2c.start{}
-    i2c.wr_block (@cmd_packet, 2)
-    repeat tmp from 0 to nr_bytes-1
-        i2c.write (byte[buff_addr][tmp])
+    i2c.wrblock_lsbf(@cmd_packet, 2)
+    i2c.wrblock_lsbf(buff_addr, nr_bytes)
     i2c.stop{}
 
 DAT

@@ -7,7 +7,7 @@ This is a P8X32A/Propeller, ~~P2X8C4M64P/Propeller 2~~ driver object for the APD
 
 ## Salient Features
 
-* I2C connection at up to 400kHz
+* I2C connection at ~30kHz (P1: SPIN I2C) up to 400kHz (P1: PASM I2C)
 * Ambient light/RGB sensing (read C, R, G, B channels independently or all channels simultaneously)
 * Set ALS/RGB sensor gain
 * Set ALS/RGB sensor integration time
@@ -26,7 +26,7 @@ This is a P8X32A/Propeller, ~~P2X8C4M64P/Propeller 2~~ driver object for the APD
 
 P1/SPIN1:
 * spin-standard-library
-* 1 extra core/cog for the PASM I2C driver
+* 1 extra core/cog for the PASM I2C engine (none if SPIN I2C engine is used)
 
 ~~P2/SPIN2:~~
 * ~~p2-spin-standard-library~~
