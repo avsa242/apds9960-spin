@@ -4,9 +4,9 @@
     Author: Jesse Burt
     Description: Driver for the Allegro APDS9960 Proximity,
         Ambient Light, RGB and Gesture sensor
-    Copyright (c) 2021
+    Copyright (c) 2022
     Started Aug 02, 2020
-    Updated Aug 15, 2021
+    Updated May 25, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -35,15 +35,13 @@ CON
 
 OBJ
 
-#ifdef APDS9960_PASM
-    i2c : "com.i2c"                             ' PASM I2C engine (~400kHz)
-#elseifdef APDS9960_SPIN
-    i2c : "tiny.com.i2c"                        ' SPIN I2C engine (~30kHz)
+#ifdef APDS9960_SPIN
+    i2c : "com.i2c.nocog"                       ' SPIN I2C engine
 #else
-#error "One of APDS9960_PASM or APDS9960_SPIN must be defined"
+    i2c : "com.i2c"                             ' PASM I2C engine
 #endif
-    core: "core.con.apds9960"                       'File containing your device's register set
-    time: "time"                                                'Basic timing functions
+    core: "core.con.apds9960"
+    time: "time"                                ' timekeepng methods
 
 PUB Null{}
 ''This is not a top-level object
