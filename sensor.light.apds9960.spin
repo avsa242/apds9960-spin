@@ -75,14 +75,16 @@ PUB defaults{}
     als_gain(1)
     als_int_ena(false)
     als_int_duration(0)
-    als_int_thresh(0, 0, W)
+    als_int_set_lo_thresh(0)
+    als_int_set_hi_thresh(0)
     gest_mode(ALS)
     integration_time(2_780)
     prox_det_ena(false)
     prox_integration_time(8)
     prox_int_duration(0)
     prox_int_ena(false)
-    prox_int_thresh(0, 0, W)
+    prox_int_set_lo_thresh(0)
+    prox_int_set_hi_thresh(0)
     wait_timer_ena(false)
 
 PUB preset_als{}
@@ -92,7 +94,8 @@ PUB preset_als{}
     als_gain(1)
     als_int_ena(true)
     als_int_duration(0)
-    als_int_thresh(0, 0, W)
+    als_int_set_lo_thresh(0)
+    als_int_set_hi_thresh(0)
     gest_mode(ALS)
     integration_time(2_780)
     prox_det_ena(false)
@@ -109,7 +112,8 @@ PUB preset_prox{}
     prox_integration_time(8)
     prox_int_duration(0)
     prox_int_ena(true)
-    prox_int_thresh(0, 0, W)
+    prox_int_set_lo_thresh(0)
+    prox_int_set_hi_thresh(0)
     prox_pulse_cnt(8)
     wait_timer_ena(false)
 
@@ -126,8 +130,8 @@ PUB preset_gest{}
     gest_mode(GEST)
     gest_ena(true)
     gest_wait_time(0)
-    gest_start_thresh(0)
-    gest_end_thresh(0)
+    gest_set_start_thresh(0)
+    gest_set_end_thresh(0)
 
 PUB als_data(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
 ' All ambient light source data
@@ -217,25 +221,29 @@ PUB als_int_ena(state): curr_state
     state := (curr_state & core#AIEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB als_int_thresh(low, high, rw): curr_setting
-' Set ALS interrupt thresholds
+PUB als_int_hi_thresh{}: thresh
+' Get ALS interrupt high threshold
+    thresh := 0
+    readreg(core#AIHTL, 2, thresh)
+
+PUB als_int_lo_thresh{}: thresh
+' Get ALS interrupt low threshold
+    thresh := 0
+    readreg(core#AILTL, 2, thresh)
+
+PUB als_int_set_hi_thresh(thresh)
+' Set ALS interrupt high threshold
 '   Valid values
 '       low, high: 0..65535
-'       rw:
-'           R (0) read current values
-'           W (1) write new values
-'   Any other value polls the device and returns the current setting
-'   NOTE: When reading, low and high must be pointers to word or larger sized variables
-    case rw
-        R:
-            readreg(core#AILTL, 2, low)
-            readreg(core#AIHTL, 2, high)
-        W:
-            if lookdown(low: 0..65535) and lookdown(high: 0..65535)
-                writereg(core#AILTL, 2, @low)
-                writereg(core#AIHTL, 2, @high)
+    thresh := 0 #> thresh <# 65535
+    writereg(core#AIHTL, 2, @high)
 
-    return
+PUB als_int_set_lo_thresh(thresh)
+' Set ALS interrupt low threshold
+'   Valid values
+'       low, high: 0..65535
+    thresh := 0 #> thresh <# 65535
+    writereg(core#AILTL, 2, @high)
 
 PUB blue_data{}: bdata
 ' Blue-channel sensor data
@@ -409,18 +417,17 @@ PUB gest_end_duration(cycles): curr_setting
     cycles := (curr_setting & core#GEXPERS_MASK) | cycles
     writereg(core#GCONF1, 1, @cycles)
 
-PUB gest_end_thresh(level): curr_lvl
+PUB gest_end_thresh{}: thresh
+' Get threshold used to determine if a gesture has ended
+    thresh := 0
+    readreg(core#GEXTH, 1, @thresh)
+
+PUB gest_set_end_thresh(thresh)
 ' Set threshold used to determine if a gesture has ended
 '   Valid values: 0..255
-'   Any other value polls the device and returns the current setting
 '   NOTE: This value is compared with output from ProxData(), to determine if a gesture has started
-    case level
-        0..255:
-            writereg(core#GEXTH, 1, @level)
-        other:
-            curr_lvl := 0
-            readreg(core#GEXTH, 1, @curr_lvl)
-            return
+    thresh := 0 #> thresh <# 255
+    writereg(core#GEXTH, 1, @thresh)
 
 PUB gest_fifo_thresh(level): curr_thr
 ' Set gesture FIFO threshold for asserting an interrupt
@@ -498,18 +505,17 @@ PUB gest_mode(mode): curr_mode
     mode := (curr_mode & core#GMODE_MASK) | mode
     writereg(core#GCONF4, 1, @mode)
 
-PUB gest_start_thresh(level): curr_lvl
+PUB gest_start_thresh{}: thresh
+' Get threshold used to determine if a gesture has started
+    thresh := 0
+    readreg(core#GPENTH, 1, @thresh)
+
+PUB gest_set_start_thresh(thresh)
 ' Set threshold used to determine if a gesture has started
 '   Valid values: 0..255
-'   Any other value polls the device and returns the current setting
 '   NOTE: This value is compared with output from ProxData(), to determine if a gesture has started
-    case level
-        0..255:
-            writereg(core#GPENTH, 1, @level)
-        other:
-            curr_lvl := 0
-            readreg(core#GPENTH, 1, @curr_lvl)
-            return
+    thresh := 0 #> thresh <# 255
+    writereg(core#GPENTH, 1, @thresh)
 
 PUB gest_wait_time(msecs): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in milliseconds
@@ -680,25 +686,29 @@ PUB prox_int_ena(state): curr_state
     state := (curr_state & core#PIEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB prox_int_thresh(low, high, rw): curr_thr
-' Set proximity sensor interrupt thresholds
-'   Valid values
-'       low, high: 0..255
-'       rw:
-'           R (0) read current values
-'           W (1) write new values
-'   Any other value polls the device and returns the current setting
-'   NOTE: When reading, low and high must be pointers to byte or larger sized variables
-    case rw
-        R:
-            readreg(core#PILT, 1, low)
-            readreg(core#PIHT, 1, high)
-        W:
-            if lookdown(low: 0..255) and lookdown(high: 0..255)
-                writereg(core#PILT, 1, @low)
-                writereg(core#PIHT, 1, @high)
+PUB prox_int_hi_thresh{}: thresh
+' Get proximity sensor interrupt high threshold
+    thresh := 0
+    readreg(core#PIHT, 1, thresh)
 
-    return
+PUB prox_int_lo_thresh{}: thresh
+' Get proximity sensor interrupt low threshold
+    thresh := 0
+    readreg(core#PILT, 1, thresh)
+
+PUB prox_int_set_hi_thresh(thresh)
+' Set proximity sensor interrupt high threshold
+'   Valid values
+'       0..255
+    thresh := 0 #> thresh <# 255
+    writereg(core#PIHT, 1, @thresh)
+
+PUB prox_int_set_lo_thresh(thresh)
+' Set proximity sensor interrupt low threshold
+'   Valid values
+'       0..255
+    thresh := 0 #> thresh <# 255
+    writereg(core#PILT, 1, @thresh)
 
 PUB prox_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
 ' Set proximity pulse count, generated on LDR   'XXX tentative summary
