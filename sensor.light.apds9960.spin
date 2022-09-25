@@ -5,8 +5,8 @@
     Description: Driver for the Allegro APDS9960 Proximity,
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2022
-    Started Aug 02, 2020
-    Updated May 25, 2022
+    Started Aug 2, 2020
+    Updated Sep 25, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -43,93 +43,93 @@ OBJ
     core: "core.con.apds9960"
     time: "time"                                ' timekeepng methods
 
-PUB Null{}
-''This is not a top-level object
+PUB null{}
+' This is not a top-level object
 
-PUB Start{}: status
+PUB start{}: status
 ' Start using "standard" Propeller I2C pins and 100kHz
     return startx(DEF_SCL, DEF_SDA, DEF_HZ)
 
-PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ): status
+PUB startx(SCL_PIN, SDA_PIN, I2C_HZ): status
 ' Start using custom I/O settings
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) and {
 }   I2C_HZ =< core#I2C_MAX_FREQ                 ' validate I/O pins and freq
         if (status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ))
             time.msleep(core#TPOR)
-            if i2c.present(SLAVE_WR)            ' test device bus presence
-                if deviceid{} == core#DEVID_RESP
+            if (i2c.present(SLAVE_WR))          ' test device bus presence
+                if (dev_id{} == core#DEVID_RESP)
                     return
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
     ' Lastly - make sure you have at least one free core/cog
     return FALSE
 
-PUB Stop{}
-' Put any other housekeeping code here required/recommended by your device before shutting down
+PUB stop{}
+' Stop the driver
     i2c.deinit{}
 
-PUB Defaults{}
+PUB defaults{}
 ' Set factory/POR defaults
     powered(false)
-    alsenabled(false)
-    alsgain(1)
-    alsintsenabled(false)
-    alsintpersistence(0)
-    alsintthreshold(0, 0, W)
-    gesturemode(ALS)
-    integrationtime(2_780)
-    proxdetenabled(false)
-    proxintegrationtime(8)
-    proxintpersistence(0)
-    proxintsenabled(false)
-    proxintthresh(0, 0, W)
-    waittimerenabled(false)
+    als_ena(false)
+    als_gain(1)
+    als_int_ena(false)
+    als_int_duration(0)
+    als_int_thresh(0, 0, W)
+    gest_mode(ALS)
+    integration_time(2_780)
+    prox_det_ena(false)
+    prox_integration_time(8)
+    prox_int_duration(0)
+    prox_int_ena(false)
+    prox_int_thresh(0, 0, W)
+    wait_timer_ena(false)
 
-PUB DefaultsALS{}
+PUB preset_als{}
 ' Set defaults for using the sensor in ALS/RGB mode
     powered(true)
-    alsenabled(true)
-    alsgain(1)
-    alsintsenabled(true)
-    alsintpersistence(0)
-    alsintthreshold(0, 0, W)
-    gesturemode(ALS)
-    integrationtime(2_780)
-    proxdetenabled(false)
-    proxintsenabled(false)
-    waittimerenabled(false)
+    als_ena(true)
+    als_gain(1)
+    als_int_ena(true)
+    als_int_duration(0)
+    als_int_thresh(0, 0, W)
+    gest_mode(ALS)
+    integration_time(2_780)
+    prox_det_ena(false)
+    prox_int_ena(false)
+    wait_timer_ena(false)
 
-PUB DefaultsProx{}
+PUB preset_prox{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
-    alsenabled(false)
-    gesturemode(ALS)
-    proxdetenabled(true)
-    proxgain(4)
-    proxintegrationtime(8)
-    proxintpersistence(0)
-    proxintsenabled(true)
-    proxintthresh(0, 0, W)
-    proxpulsecount(8)
-    waittimerenabled(false)
+    als_ena(false)
+    gest_mode(ALS)
+    prox_det_ena(true)
+    prox_gain(4)
+    prox_integration_time(8)
+    prox_int_duration(0)
+    prox_int_ena(true)
+    prox_int_thresh(0, 0, W)
+    prox_pulse_cnt(8)
+    wait_timer_ena(false)
 
-PUB DefaultsGest{}
+PUB preset_gest{}
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
-    gestendpersistence(1)
-    gestledcurrent(100)
-    gestpulsecount(1)
-    gesturedims(BOTH)
-    gesturefifothresh(1)
-    gesturegain(1)
-    gestureintsenabled(true)
-    gesturemode(GEST)
-    gesturesenabled(true)
-    gestwaittime(0)
-    gesturestartthresh(0)
-    gestureendthresh(0)
+    gest_end_duration(1)
+    gest_led_current(100)
+    gest_pulse_cnt(1)
+    gest_dims(BOTH)
+    gest_fifo_thresh(1)
+    gest_gain(1)
+    gest_int_ena(true)
+    gest_mode(GEST)
+    gest_ena(true)
+    gest_wait_time(0)
+    gest_start_thresh(0)
+    gest_end_thresh(0)
 
-PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
+PUB als_data(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
 ' All ambient light source data
 '   ptr_c, ptr_r, ptr_g, ptr_b: pointers at least 1 word in size, each
     readreg(core#CDATAL, 8, @tmp)
@@ -138,14 +138,14 @@ PUB ALSData(ptr_c, ptr_r, ptr_g, ptr_b) | tmp[2]
     long[ptr_g] := tmp.word[2]
     long[ptr_b] := tmp.word[3]
 
-PUB ALSDataReady{}: flag
+PUB als_data_rdy{}: flag
 ' Flag indicating ambient light source data is ready
 '   Returns: TRUE (-1) or FALSE (0)
     flag := 0
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#AVALID) & 1) == 1
 
-PUB ALSEnabled(state): curr_state
+PUB als_ena(state): curr_state
 ' Enable ambient light source sensor/ADC
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -160,7 +160,7 @@ PUB ALSEnabled(state): curr_state
     state := (curr_state & core#AEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB ALSGain(factor): curr_gain
+PUB als_gain(factor): curr_gain
 ' Set ambient light sensor gain multiplier
 '   Valid values: *1, 4, 16, 64
 '   Any other value polls the device and returns the current setting
@@ -176,7 +176,7 @@ PUB ALSGain(factor): curr_gain
     factor := (curr_gain & core#AGAIN_MASK) | factor
     writereg(core#CONTROL, 1, @factor)
 
-PUB ALSIntPersistence(cycles): curr_setting
+PUB als_int_duration(cycles): curr_setting
 ' Set interrupt persistence, in cycles
 '   Defines how many consecutive measurements must be outside the interrupt threshold
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
@@ -202,7 +202,7 @@ PUB ALSIntPersistence(cycles): curr_setting
     cycles := (curr_setting & core#APERS_MASK) | cycles
     writereg(core#PERS, 1, @cycles)
 
-PUB ALSIntsEnabled(state): curr_state
+PUB als_int_ena(state): curr_state
 ' Enable ALS interrupt source
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -217,7 +217,7 @@ PUB ALSIntsEnabled(state): curr_state
     state := (curr_state & core#AIEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB ALSIntThreshold(low, high, rw): curr_setting
+PUB als_int_thresh(low, high, rw): curr_setting
 ' Set ALS interrupt thresholds
 '   Valid values
 '       low, high: 0..65535
@@ -237,42 +237,42 @@ PUB ALSIntThreshold(low, high, rw): curr_setting
 
     return
 
-PUB BlueData{}: bdata
+PUB blue_data{}: bdata
 ' Blue-channel sensor data
 '   Returns: 16-bit unsigned
     bdata := 0
     readreg(core#CDATAL, 2, @bdata)
 
-PUB ClearData{}: cdata
+PUB clear_data{}: cdata
 ' Clear-channel sensor data
 '   Returns: 16-bit unsigned
     cdata := 0
     readreg(core#CDATAL, 2, @cdata)
 
-PUB DeviceID{}: id
+PUB dev_id{}: id
 ' Read device identification
     id := 0
     readreg(core#DEVICEID, 1, @id)
 
-PUB GreenData{}: gdata
+PUB green_data{}: gdata
 ' Green-channel sensor data
 '   Returns: 16-bit unsigned
     gdata := 0
     readreg(core#GDATAL, 2, @gdata)
 
-PUB GestFIFOUnreadSamples{}: nr_samples
+PUB gest_fifo_nr_unread{}: nr_samples
 ' Number of samples available in FIFO
 '   Returns: 8-bit unsigned
 '   NOTE: One sample is a complete set of U, D, L, R data. To reduce the level reported here, a complete dataset must be read
     readreg(core#GFLVL, 1, @nr_samples)
 
-PUB GestFIFOOverflow{}: flag
+PUB gest_fifo_overflow{}: flag
 ' Flag indicating gesture FIFO has overflowed
 '   Returns: TRUE (-1) if FIFO overflowed (data has been lost), FALSE (0) otherwise
     readreg(core#GSTATUS, 1, @flag)
     flag := ((flag >> core#GFOV) & 1) == 1
 
-PUB GestLEDCurrent(mA): curr_setting | ledboost
+PUB gest_led_current(mA): curr_setting | ledboost
 ' Set LED drive current in gesture mode, in milliamperes
 '   Valid values: 300, 200, 150, *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
@@ -298,7 +298,7 @@ PUB GestLEDCurrent(mA): curr_setting | ledboost
     writereg(core#GCONF2, 1, @mA)
     writereg(core#CONFIG2, 1, @ledboost)
 
-PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
+PUB gest_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
 ' Set gesture LED pulse count, generated on LDR 'XXX tentative summary
 '   Valid values: 1..64
 '   Any other value polls the device and returns the current setting
@@ -313,7 +313,7 @@ PUB GestPulseCount(nr_pulses): curr_setting     'XXX tentatively named
     nr_pulses := (curr_setting & core#GPULSE_MASK) | nr_pulses
     writereg(core#GPULSECNT, 1, @nr_pulses)
 
-PUB GestPulseLen(usec): curr_setting
+PUB gest_pulse_len(usec): curr_setting
 ' Set gesture LED pulse length, generated on LDR, in microseconds 'XXX tentative summary
 '   Valid values: 4, *8, 16, 32
 '   Any other value polls the device and returns the current setting
@@ -329,7 +329,7 @@ PUB GestPulseLen(usec): curr_setting
     usec := (curr_setting & core#GPLEN_MASK) | usec
     writereg(core#GPULSECNT, 1, @usec)
 
-PUB GestureData(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
+PUB gest_data(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
 ' All gesture sensor source data
 '   ptr_u, ptr_d, ptr_l, ptr_r: pointers at least 1 byte in size, each
     readreg(core#GFIFO_U, 4, @tmp)
@@ -338,33 +338,33 @@ PUB GestureData(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
     byte[ptr_l] := tmp.byte[2]
     byte[ptr_r] := tmp.byte[3]
 
-PUB GestureDataDown{}: data
+PUB gest_data_down{}: data
 ' Gesture sensor down direction data
 '   Returns: 8-bit unsigned
     readreg(core#GFIFO_D, 1, @data)
 
-PUB GestureDataLeft{}: data
+PUB gest_data_left{}: data
 ' Gesture sensor left direction data
 '   Returns: 8-bit unsigned
     readreg(core#GFIFO_L, 1, @data)
 
-PUB GestureDataReady{}: flag
+PUB gest_data_rdy{}: flag
 ' Flag indicating gesture FIFO contains valid data
 '   NOTE: Flag will be set when FIFO level exceeds threshold set with GestureFIFOThresh()
     readreg(core#GSTATUS, 1, @flag)
     return (flag & 1) == 1
 
-PUB GestureDataRight{}: data
+PUB gest_data_right{}: data
 ' Gesture sensor right direction data
 '   Returns: 8-bit unsigned
     readreg(core#GFIFO_R, 1, @data)
 
-PUB GestureDataUp{}: data
+PUB gest_data_up{}: data
 ' Gesture sensor up direction data
 '   Returns: 8-bit unsigned
     readreg(core#GFIFO_U, 1, @data)
 
-PUB GestureDims(dim_select): curr_setting
+PUB gest_dims(dim_select): curr_setting
 ' Select which sensor pairs are used to detect gestures
 '   Valid values:
 '       BOTH (0): Both Up/Down and Left/Right sensors active
@@ -379,7 +379,7 @@ PUB GestureDims(dim_select): curr_setting
             readreg(core#GCONF3, 1, @curr_setting)
             return (curr_setting & core#GDIMS_BITS)
 
-PUB GesturesEnabled(state): curr_state
+PUB gest_ena(state): curr_state
 ' Enable gesture sensing
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -394,7 +394,7 @@ PUB GesturesEnabled(state): curr_state
     state := (curr_state & core#GEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB GestEndPersistence(cycles): curr_setting
+PUB gest_end_duration(cycles): curr_setting
 ' Set gesture exit persistence filter (number of gesture end occurences before gesture state machine is exited) 'XXX tentative summary
 '   Valid values: 1, 2, 4, 7
 '   Any other value polls the device and returns the current setting
@@ -409,7 +409,7 @@ PUB GestEndPersistence(cycles): curr_setting
     cycles := (curr_setting & core#GEXPERS_MASK) | cycles
     writereg(core#GCONF1, 1, @cycles)
 
-PUB GestureEndThresh(level): curr_lvl
+PUB gest_end_thresh(level): curr_lvl
 ' Set threshold used to determine if a gesture has ended
 '   Valid values: 0..255
 '   Any other value polls the device and returns the current setting
@@ -422,7 +422,7 @@ PUB GestureEndThresh(level): curr_lvl
             readreg(core#GEXTH, 1, @curr_lvl)
             return
 
-PUB GestureFIFOThresh(level): curr_thr
+PUB gest_fifo_thresh(level): curr_thr
 ' Set gesture FIFO threshold for asserting an interrupt
 '   Valid values: *1, 4, 8, 16
 '   Any other value polls the device and returns the current setting
@@ -439,7 +439,7 @@ PUB GestureFIFOThresh(level): curr_thr
     level := (curr_thr & core#GFIFOTH_MASK) | level
     writereg(core#GCONF1, 1, @level)
 
-PUB GestureGain(factor): curr_setting
+PUB gest_gain(factor): curr_setting
 ' Set proximity sensor gain in gesture mode
 '   Valid values: *1, 2, 4, 8
 '   Any other value polls the device and returns the current setting
@@ -455,19 +455,19 @@ PUB GestureGain(factor): curr_setting
     factor := (curr_setting & core#GGAIN_MASK) | factor
     writereg(core#GCONF2, 1, @factor)
 
-PUB GestureIntClear{} | tmp
+PUB gest_int_clr{} | tmp
 ' Clear gesture-sourced interrupts
     readreg(core#GCONF4, 1, @tmp)
     tmp |= (1 << core#GFIFO_CLR)
     writereg(core#GCONF4, 1, @tmp)
 
-PUB GestureInterrupt{}: flag
+PUB gest_interrupt{}: flag
 ' Flag indicating gesture interrupt asserted
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#GINT) & 1) == 1
 
-PUB GestureIntsEnabled(state): curr_state
+PUB gest_int_ena(state): curr_state
 ' Enable gesture sensor interrupt source
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and rturns the current setting
@@ -482,7 +482,7 @@ PUB GestureIntsEnabled(state): curr_state
     state := (curr_state & core#GIEN_MASK) | state
     writereg(core#GCONF4, 1, @state)
 
-PUB GestureMode(mode): curr_mode
+PUB gest_mode(mode): curr_mode
 ' Set gesture sensor operating mode
 '   Valid values:
 '       ALS (0): ALS/Proximity/RGB mode
@@ -498,7 +498,7 @@ PUB GestureMode(mode): curr_mode
     mode := (curr_mode & core#GMODE_MASK) | mode
     writereg(core#GCONF4, 1, @mode)
 
-PUB GestureStartThresh(level): curr_lvl
+PUB gest_start_thresh(level): curr_lvl
 ' Set threshold used to determine if a gesture has started
 '   Valid values: 0..255
 '   Any other value polls the device and returns the current setting
@@ -511,7 +511,7 @@ PUB GestureStartThresh(level): curr_lvl
             readreg(core#GPENTH, 1, @curr_lvl)
             return
 
-PUB GestWaitTime(msecs): curr_setting
+PUB gest_wait_time(msecs): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in milliseconds
 '   Valid values: *0, 2_8 (2.8), 5_6 (5.6), 8_4 (8.4), 14_0 (14.0), 22_4 (22.4), 30_8 (30.8), 39_2 (39.2)
 '   Any other value polls the device and returns the current setting
@@ -528,7 +528,7 @@ PUB GestWaitTime(msecs): curr_setting
     msecs := (curr_setting & core#GWTIME_MASK) | msecs
     writereg(core#GCONF2, 1, @msecs)
 
-PUB IntegrationTime(usecs): curr_setting
+PUB integration_time(usecs): curr_setting
 ' Set ALS integration time, in microseconds
 '   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
 '   Any other value polls the device and returns the current setting
@@ -542,7 +542,7 @@ PUB IntegrationTime(usecs): curr_setting
             readreg(core#ATIME, 1, @curr_setting)
             return (256-curr_setting) * 2_780
 
-PUB LEDCurrent(mA): curr_setting
+PUB led_current(mA): curr_setting
 ' Set LED drive current, used in Proximity and Gesture sensing modes, in milliamperes
 '   Valid values: *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
@@ -558,10 +558,10 @@ PUB LEDCurrent(mA): curr_setting
     mA := (curr_setting & core#LDRIVE_MASK) | mA
     writereg(core#CONTROL, 1, @mA)
 
-PUB OpMode(mode): curr_mode
+PUB opmode(mode): curr_mode
 ' GCONF4?
 
-PUB Powered(state): curr_state
+PUB powered(state): curr_state
 ' Enable device power
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -576,19 +576,19 @@ PUB Powered(state): curr_state
     state := (curr_state & core#PON_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB ProxData{}: pdata
+PUB prox_data{}: pdata
 ' Read proximity sensor data
 '   Returns: 8bit unsigned
     readreg(core#PDATA, 1, @pdata)
 
-PUB ProxDataReady{}: flag
+PUB prox_data_rdy{}: flag
 ' Flag indicating proximity sensor data is ready
 '   Returns: TRUE (-1) or FALSE (0)
     flag := 0
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#PVALID) & 1) == 1
 
-PUB ProxDetEnabled(state): curr_state
+PUB prox_det_ena(state): curr_state
 ' Enable proximity sensing/detection
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -603,7 +603,7 @@ PUB ProxDetEnabled(state): curr_state
     state := (curr_state & core#PEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB ProxGain(factor): curr_gain
+PUB prox_gain(factor): curr_gain
 ' Set proximity sensor gain multiplier
 '   Valid values: *1, 2, 4, 8
 '   Any other value polls the device and returns the current setting
@@ -619,11 +619,11 @@ PUB ProxGain(factor): curr_gain
     factor := (curr_gain & core#PGAIN_MASK) | factor
     writereg(core#CONTROL, 1, @factor)
 
-PUB ProxIntClear{}
+PUB prox_int_clr{}
 ' Clear proximity sensor interrupt
     writereg(core#PICLEAR, 0, 0)
 
-PUB ProxIntegrationTime(usecs): curr_setting
+PUB prox_integration_time(usecs): curr_setting
 ' Set proximity sensor integration time, in microseconds
 '   Valid values: 4, *8, 16, 32
 '   Any other value polls the device and returns the current setting
@@ -639,13 +639,13 @@ PUB ProxIntegrationTime(usecs): curr_setting
     usecs := (curr_setting & core#PPLEN_MASK) | usecs
     writereg(core#PPULSECNT, 1, @usecs)
 
-PUB ProxInterrupt{}: flag
+PUB prox_interrupt{}: flag
 ' Flag indicating proximity sensor interrupt
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
     readreg(core#STATUS, 1, @flag)
     return ((flag >> core#PINT) & 1) == 1
 
-PUB ProxIntPersistence(cycles): curr_setting
+PUB prox_int_duration(cycles): curr_setting
 ' Set interrupt persistence, in cycles
 '   Defines how many consecutive measurements must be outside the interrupt threshold
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
@@ -665,7 +665,7 @@ PUB ProxIntPersistence(cycles): curr_setting
     cycles := (curr_setting & core#PPERS_MASK) | cycles
     writereg(core#PERS, 1, @cycles)
 
-PUB ProxIntsEnabled(state): curr_state
+PUB prox_int_ena(state): curr_state
 ' Enable Proximity sensor interrupt source
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -680,7 +680,7 @@ PUB ProxIntsEnabled(state): curr_state
     state := (curr_state & core#PIEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PUB ProxIntThresh(low, high, rw): curr_thr
+PUB prox_int_thresh(low, high, rw): curr_thr
 ' Set proximity sensor interrupt thresholds
 '   Valid values
 '       low, high: 0..255
@@ -700,7 +700,7 @@ PUB ProxIntThresh(low, high, rw): curr_thr
 
     return
 
-PUB ProxPulseCount(nr_pulses): curr_setting     'XXX tentatively named
+PUB prox_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
 ' Set proximity pulse count, generated on LDR   'XXX tentative summary
 '   Valid values: 1..64
 '   Any other value polls the device and returns the current setting
@@ -715,16 +715,16 @@ PUB ProxPulseCount(nr_pulses): curr_setting     'XXX tentatively named
     nr_pulses := (curr_setting & core#PPULSE_MASK) | nr_pulses
     writereg(core#PPULSECNT, 1, @nr_pulses)
 
-PUB RedData{}: rdata
+PUB red_data{}: rdata
 ' Red-channel sensor data
 '   Returns: 16-bit unsigned
     rdata := 0
     readreg(core#RDATAL, 2, @rdata)
 
-PUB Reset{}
+PUB reset{}
 ' Reset the device
 
-PUB SleepAfterInts(enable): curr_setting
+PUB sleep_after_ints(enable): curr_setting
 ' Enter low power mode when an interrupt is asserted
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -740,7 +740,7 @@ PUB SleepAfterInts(enable): curr_setting
     enable := (curr_setting & core#SAI_MASK) | enable
     writereg(core#CONFIG3, 1, @enable)
 
-PUB WaitTime(usecs): curr_setting
+PUB wait_time(usecs): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in microseconds
 '   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
 '   Any other value polls the device and returns the current setting
@@ -754,7 +754,7 @@ PUB WaitTime(usecs): curr_setting
             readreg(core#WTIME, 1, @curr_setting)
             return (256-curr_setting) * 2_780
 
-PUB WaitTimerEnabled(state): curr_state
+PUB wait_timer_ena(state): curr_state
 ' Enable inter-measurement wait timer
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -769,7 +769,7 @@ PUB WaitTimerEnabled(state): curr_state
     state := (curr_state & core#WEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
 
-PRI readReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
+PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt, tmp
 ' Read nr_bytes from the slave device
     case reg_nr                                             ' Basic register validation
         core#CDATAL, core#RDATAL, core#GDATAL, core#BDATAL, core#PDATA:
@@ -777,56 +777,55 @@ PRI readReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
         other:
             return
 
-    cmd_packet.byte[0] := SLAVE_WR
-    cmd_packet.byte[1] := reg_nr
+    cmd_pkt.byte[0] := SLAVE_WR
+    cmd_pkt.byte[1] := reg_nr
     i2c.start{}
-    i2c.wrblock_lsbf(@cmd_packet, 2)
+    i2c.wrblock_lsbf(@cmd_pkt, 2)
     i2c.start{}
     i2c.write (SLAVE_RD)
-    i2c.rdblock_lsbf(buff_addr, nr_bytes, i2c#NAK)
+    i2c.rdblock_lsbf(ptr_buff, nr_bytes, i2c#NAK)
     i2c.stop{}
 
-PRI writeReg(reg_nr, nr_bytes, buff_addr) | cmd_packet, tmp
+PRI writereg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt, tmp
 ' Write nr_bytes to the slave device
     case reg_nr                                             ' Basic register validation
         core#RAM..core#ATIME, core#WTIME..core#AIHTH, core#PILT, core#PIHT, core#PERS..core#CONTROL, core#POFFSET_UR..core#GOFFSET_L, core#GOFFSET_R..core#GCONF4:
         core#CONFIG2:
-            byte[buff_addr][0] |= 1                         ' APDS9960: Reserved bit that must always be set
+            byte[ptr_buff][0] |= 1                         ' APDS9960: Reserved bit that must always be set
         core#IFORCE..core#AICLEAR:                          ' Commands with no parameters
-            cmd_packet.byte[0] := SLAVE_WR
-            cmd_packet.byte[1] := reg_nr
+            cmd_pkt.byte[0] := SLAVE_WR
+            cmd_pkt.byte[1] := reg_nr
             i2c.start{}
-            i2c.wrblock_lsbf(@cmd_packet, 2)
+            i2c.wrblock_lsbf(@cmd_pkt, 2)
             i2c.stop{}
             return
         other:
             return
 
-    cmd_packet.byte[0] := SLAVE_WR
-    cmd_packet.byte[1] := reg_nr
+    cmd_pkt.byte[0] := SLAVE_WR
+    cmd_pkt.byte[1] := reg_nr
     i2c.start{}
-    i2c.wrblock_lsbf(@cmd_packet, 2)
-    i2c.wrblock_lsbf(buff_addr, nr_bytes)
+    i2c.wrblock_lsbf(@cmd_pkt, 2)
+    i2c.wrblock_lsbf(ptr_buff, nr_bytes)
     i2c.stop{}
 
 DAT
 {
-    --------------------------------------------------------------------------------------------------------
-    TERMS OF USE: MIT License
+Copyright 2022 Jesse Burt
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-    associated documentation files (the "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
-    following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all copies or substantial
-    portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-    LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    --------------------------------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
+
