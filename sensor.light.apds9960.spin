@@ -1,6 +1,6 @@
 {
     --------------------------------------------
-    Filename: sensor.light.apds9960.i2c.spin
+    Filename: sensor.light.apds9960.spin
     Author: Jesse Burt
     Description: Driver for the Allegro APDS9960 Proximity,
         Ambient Light, RGB and Gesture sensor

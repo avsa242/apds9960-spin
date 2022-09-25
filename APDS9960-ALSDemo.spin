@@ -33,7 +33,7 @@ OBJ
     cfg     : "core.con.boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
-    apds    : "sensor.light.apds9960.i2c"
+    apds    : "sensor.light.apds9960"
 
 PUB Main{} | c, r, g, b
 
