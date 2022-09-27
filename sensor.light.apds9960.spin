@@ -643,7 +643,7 @@ PUB prox_interrupt{}: flag
     return ((flag >> core#PINT) & 1) == 1
 
 PUB prox_int_duration(cycles): curr_setting
-' Set interrupt persistence, in cycles
+' Set interrupt duration, in cycles
 '   Defines how many consecutive measurements must be outside the interrupt threshold
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
 '   Valid values:
