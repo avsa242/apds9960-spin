@@ -6,7 +6,7 @@
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2022
     Started Aug 2, 2020
-    Updated Sep 25, 2022
+    Updated Sep 27, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -77,10 +77,10 @@ PUB defaults{}
     als_int_duration(0)
     als_int_set_lo_thresh(0)
     als_int_set_hi_thresh(0)
-    gest_mode(ALS)
-    integration_time(2_780)
+    opmode(ALS)
+    als_integr_time(2_780)
     prox_det_ena(false)
-    prox_integration_time(8)
+    prox_integr_time(8)
     prox_int_duration(0)
     prox_int_ena(false)
     prox_int_set_lo_thresh(0)
@@ -96,8 +96,8 @@ PUB preset_als{}
     als_int_duration(0)
     als_int_set_lo_thresh(0)
     als_int_set_hi_thresh(0)
-    gest_mode(ALS)
-    integration_time(2_780)
+    opmode(ALS)
+    als_integr_time(2_780)
     prox_det_ena(false)
     prox_int_ena(false)
     wait_timer_ena(false)
@@ -106,10 +106,10 @@ PUB preset_prox{}
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
     als_ena(false)
-    gest_mode(ALS)
+    opmode(ALS)
     prox_det_ena(true)
     prox_gain(4)
-    prox_integration_time(8)
+    prox_integr_time(8)
     prox_int_duration(0)
     prox_int_ena(true)
     prox_int_set_lo_thresh(0)
@@ -127,7 +127,7 @@ PUB preset_gest{}
     gest_fifo_thresh(1)
     gest_gain(1)
     gest_int_ena(true)
-    gest_mode(GEST)
+    opmode(GEST)
     gest_ena(true)
     gest_wait_time(0)
     gest_set_start_thresh(0)
@@ -181,7 +181,7 @@ PUB als_gain(factor): curr_gain
     writereg(core#CONTROL, 1, @factor)
 
 PUB als_int_duration(cycles): curr_setting
-' Set interrupt persistence, in cycles
+' Set interrupt duration, in cycles
 '   Defines how many consecutive measurements must be outside the interrupt threshold
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
 '   Valid values:
@@ -236,26 +236,34 @@ PUB als_int_set_hi_thresh(thresh)
 '   Valid values
 '       low, high: 0..65535
     thresh := 0 #> thresh <# 65535
-    writereg(core#AIHTL, 2, @high)
+    writereg(core#AIHTL, 2, @thresh)
 
 PUB als_int_set_lo_thresh(thresh)
 ' Set ALS interrupt low threshold
 '   Valid values
 '       low, high: 0..65535
     thresh := 0 #> thresh <# 65535
-    writereg(core#AILTL, 2, @high)
+    writereg(core#AILTL, 2, @thresh)
+
+PUB als_integr_time(usecs): curr_setting
+' Set ALS integration time, in microseconds
+'   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
+'   Any other value polls the device and returns the current setting
+'   NOTE: This setting only applies to the ALS/RGB engine. The proximity and gesture engines are not affected.
+    case usecs
+        2_780..712_000:
+            usecs := 256-(usecs / 2_780)
+            writereg(core#ATIME, 1, @usecs)
+        other:
+            curr_setting := 0
+            readreg(core#ATIME, 1, @curr_setting)
+            return (256-curr_setting) * 2_780
 
 PUB blue_data{}: bdata
 ' Blue-channel sensor data
 '   Returns: 16-bit unsigned
     bdata := 0
     readreg(core#CDATAL, 2, @bdata)
-
-PUB clear_data{}: cdata
-' Clear-channel sensor data
-'   Returns: 16-bit unsigned
-    cdata := 0
-    readreg(core#CDATAL, 2, @cdata)
 
 PUB dev_id{}: id
 ' Read device identification
@@ -489,22 +497,6 @@ PUB gest_int_ena(state): curr_state
     state := (curr_state & core#GIEN_MASK) | state
     writereg(core#GCONF4, 1, @state)
 
-PUB gest_mode(mode): curr_mode
-' Set gesture sensor operating mode
-'   Valid values:
-'       ALS (0): ALS/Proximity/RGB mode
-'       GEST (1): Gesture mode
-'   Any other value polls the device and rturns the current setting
-    curr_mode := 0
-    readreg(core#GCONF4, 1, @curr_mode)
-    case mode
-        ALS, GEST:
-        other:
-            return curr_mode & 1
-
-    mode := (curr_mode & core#GMODE_MASK) | mode
-    writereg(core#GCONF4, 1, @mode)
-
 PUB gest_start_thresh{}: thresh
 ' Get threshold used to determine if a gesture has started
     thresh := 0
@@ -534,20 +526,6 @@ PUB gest_wait_time(msecs): curr_setting
     msecs := (curr_setting & core#GWTIME_MASK) | msecs
     writereg(core#GCONF2, 1, @msecs)
 
-PUB integration_time(usecs): curr_setting
-' Set ALS integration time, in microseconds
-'   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
-'   Any other value polls the device and returns the current setting
-'   NOTE: This setting only applies to the ALS/RGB engine. The proximity and gesture engines are not affected.
-    case usecs
-        2_780..712_000:
-            usecs := 256-(usecs / 2_780)
-            writereg(core#ATIME, 1, @usecs)
-        other:
-            curr_setting := 0
-            readreg(core#ATIME, 1, @curr_setting)
-            return (256-curr_setting) * 2_780
-
 PUB led_current(mA): curr_setting
 ' Set LED drive current, used in Proximity and Gesture sensing modes, in milliamperes
 '   Valid values: *100, 50, 25, 12_5 (12.5)
@@ -565,7 +543,20 @@ PUB led_current(mA): curr_setting
     writereg(core#CONTROL, 1, @mA)
 
 PUB opmode(mode): curr_mode
-' GCONF4?
+' Set sensor operating mode
+'   Valid values:
+'       ALS (0): ALS/Proximity/RGB mode
+'       GEST (1): Gesture mode
+'   Any other value polls the device and rturns the current setting
+    curr_mode := 0
+    readreg(core#GCONF4, 1, @curr_mode)
+    case mode
+        ALS, GEST:
+        other:
+            return curr_mode & 1
+
+    mode := (curr_mode & core#GMODE_MASK) | mode
+    writereg(core#GCONF4, 1, @mode)
 
 PUB powered(state): curr_state
 ' Enable device power
@@ -629,7 +620,7 @@ PUB prox_int_clr{}
 ' Clear proximity sensor interrupt
     writereg(core#PICLEAR, 0, 0)
 
-PUB prox_integration_time(usecs): curr_setting
+PUB prox_integr_time(usecs): curr_setting
 ' Set proximity sensor integration time, in microseconds
 '   Valid values: 4, *8, 16, 32
 '   Any other value polls the device and returns the current setting
@@ -778,6 +769,12 @@ PUB wait_timer_ena(state): curr_state
 
     state := (curr_state & core#WEN_MASK) | state
     writereg(core#ENABLE, 1, @state)
+
+PUB white_data{}: cdata
+' White/clear-channel sensor data
+'   Returns: 16-bit unsigned
+    cdata := 0
+    readreg(core#CDATAL, 2, @cdata)
 
 PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt, tmp
 ' Read nr_bytes from the slave device

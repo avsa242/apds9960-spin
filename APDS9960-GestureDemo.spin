@@ -4,9 +4,9 @@
     Author: Jesse Burt
     Description: Demo of the APDS9960 driver
         (Gesture sensing functionality)
-    Copyright (c) 2020
+    Copyright (c) 2022
     Started Aug 04, 2020
-    Updated Aug 07, 2020
+    Updated Sep 27, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -45,34 +45,35 @@ VAR
     byte _total
     byte _gesture_state
 
-PUB Main{} | fifo_level, i
+PUB main{} | fifo_level, i
 
     setup{}
-    apds.defaultsgest{}
-    apds.gestureintsenabled(true)
-    apds.gesturefifothresh(1)
-    apds.gesturestartthresh(40)
-    apds.gestureendthresh(35)
-    apds.gesturegain(4)
-    apds.gestwaittime(0)
-    apds.gestpulsecount(10)
-    apds.gestpulselen(16)
-    apds.gestledcurrent(300)
-    apds.proxintthresh(0, 200, W)
-    apds.gestureintclear{}
+    apds.preset_gest{}
+    apds.gest_int_ena(true)
+    apds.gest_fifo_thresh(1)
+    apds.gest_set_start_thresh(40)
+    apds.gest_set_end_thresh(35)
+    apds.gest_gain(4)
+    apds.gest_wait_time(0)
+    apds.gest_pulse_cnt(10)
+    apds.gest_pulse_len(16)
+    apds.gest_led_current(300)
+    apds.prox_int_set_lo_thresh(0)
+    apds.prox_int_set_hi_thresh(200)
+    apds.gest_int_clr{}
     _gcnt := 0
     _total := 0
 
     repeat
-        apds.gesturemode(1)
+        apds.opmode(apds#GEST)
         time.msleep(30)
-        repeat until apds.gesturedataready{}
-        fifo_level := apds.gestfifounreadsamples{}
-        if fifo_level > 0
+        repeat until apds.gest_data_rdy{}
+        fifo_level := apds.gest_fifo_nr_unread{}
+        if (fifo_level > 0)
             repeat
-                apds.gesturedata(@_gest_u[_total], @_gest_d[_total], @_gest_l[_total], @_gest_r[_total])
+                apds.gest_data(@_gest_u[_total], @_gest_d[_total], @_gest_l[_total], @_gest_r[_total])
                 _total += 1
-            while apds.gestfifounreadsamples{} > 0
+            while apds.gest_fifo_nr_unread{} > 0
             ser.position(0, 12)
             ser.dec(_total)
             ser.chars(32, 5)
@@ -272,7 +273,7 @@ pub decodegesture
     return true
 
 
-PUB Setup{}
+PUB setup{}
 
     ser.start(SER_BAUD)
     time.msleep(30)
@@ -286,22 +287,20 @@ PUB Setup{}
 
 DAT
 {
-    --------------------------------------------------------------------------------------------------------
-    TERMS OF USE: MIT License
+Copyright 2022 Jesse Burt
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-    associated documentation files (the "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
-    following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all copies or substantial
-    portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-    LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    --------------------------------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
