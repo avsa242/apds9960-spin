@@ -41,7 +41,7 @@ PUB Main{} | prox, proxint_lo, proxint_hi, proxintpers
 
     apds.preset_prox{}                         ' setup driver with proximity
                                                 '   sensing features enabled
-    apds.prox_int_clr{}                         ' clear existing interrupt
+    apds.prox_int_clear{}                         ' clear existing interrupt
 
     ' prox_int_duration(): 0..15
     '   0: triggers an interrupt on every reading, _regardless_ of whether it's
@@ -63,7 +63,7 @@ PUB Main{} | prox, proxint_lo, proxint_hi, proxintpers
 
     ser.printf2(string("\nInterrupt thresholds (lo:hi): %d:%d\n"), proxint_lo, proxint_hi)
     ser.printf1(string("Proximity interrupt duration: %d cycles"), proxintpers)
-    apds.prox_int_clr{}
+    apds.prox_int_clear{}
     repeat
         repeat until apds.prox_data_rdy{}       ' wait for new dataset
         prox := apds.prox_data{}
@@ -75,7 +75,7 @@ PUB Main{} | prox, proxint_lo, proxint_hi, proxintpers
         else
             ser.clearline{}
         if ser.rxcheck{} == "c"                 ' press c to clear the int
-            apds.prox_int_clr{}
+            apds.prox_int_clear{}
 
 PUB setup{}
 

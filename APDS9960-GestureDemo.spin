@@ -60,7 +60,7 @@ PUB main{} | fifo_level, i
     apds.gest_led_current(300)
     apds.prox_int_set_lo_thresh(0)
     apds.prox_int_set_hi_thresh(200)
-    apds.gest_int_clr{}
+    apds.gest_int_clear{}
     _gcnt := 0
     _total := 0
 

@@ -6,7 +6,7 @@
         Ambient Light, RGB and Gesture sensor
     Copyright (c) 2022
     Started Aug 2, 2020
-    Updated Sep 27, 2022
+    Updated Nov 13, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -470,7 +470,7 @@ PUB gest_gain(factor): curr_setting
     factor := (curr_setting & core#GGAIN_MASK) | factor
     writereg(core#GCONF2, 1, @factor)
 
-PUB gest_int_clr{} | tmp
+PUB gest_int_clear{} | tmp
 ' Clear gesture-sourced interrupts
     readreg(core#GCONF4, 1, @tmp)
     tmp |= (1 << core#GFIFO_CLR)
@@ -616,7 +616,7 @@ PUB prox_gain(factor): curr_gain
     factor := (curr_gain & core#PGAIN_MASK) | factor
     writereg(core#CONTROL, 1, @factor)
 
-PUB prox_int_clr{}
+PUB prox_int_clear{}
 ' Clear proximity sensor interrupt
     writereg(core#PICLEAR, 0, 0)
 
