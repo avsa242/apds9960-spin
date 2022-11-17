@@ -6,7 +6,7 @@
         (ALS functionality)
     Copyright (c) 2022
     Started Aug 02, 2020
-    Updated Sep 27, 2022
+    Updated Nov 17, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -41,7 +41,7 @@ PUB main{} | w, r, g, b
 
     repeat
         repeat until apds.als_data_rdy{}
-        apds.als_data(@w, @r, @g, @b)
+        apds.als_data(@w, @r, @g, @b)           ' read all four channels indirectly
 
 ' Alternatively, read individual channels:
 '        w := apds.white_data{}
@@ -49,7 +49,10 @@ PUB main{} | w, r, g, b
 '        g := apds.green_data{}
 '        b := apds.blue_data{}
         ser.position(0, 3)
-        ser.printf4(string("White: %x\nRed:   %x\nGreen: %x\nBlue:  %x\n"), w, r, g, b)
+        ser.printf1(string("White: %04.4x\n\r"), w)
+        ser.printf1(string("Red:   %04.4x\n\r"), r)
+        ser.printf1(string("Green: %04.4x\n\r"), g)
+        ser.printf1(string("Blue:  %04.4x\n\r"), b)
 
 PUB setup{}
 
