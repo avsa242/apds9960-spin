@@ -1,23 +1,23 @@
 {
-    --------------------------------------------
-    Filename: APDS9960-ProxDemo.spin
-    Author: Jesse Burt
-    Description: Demo of the APDS9960 driver
-        (Proximity sensing functionality)
-    Copyright (c) 2022
-    Started Aug 03, 2020
-    Updated Sep 27, 2022
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       APDS9960-ProxDemo.spin
+    Description:    Demo of the APDS9960 driver
+        * Proximity sensing functionality
+    Author:         Jesse Burt
+    Started:        Aug 3, 2020
+    Updated:        Jun 2, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
+
 
 CON
 
-    _clkmode    = cfg#_clkmode
-    _xinfreq    = cfg#_xinfreq
+    _clkmode    = cfg._clkmode
+    _xinfreq    = cfg._xinfreq
 
 ' -- User-modifiable constants
-    LED         = cfg#LED1
+    LED         = cfg.LED1
     SER_BAUD    = 115_200
 
     I2C_SCL     = 28
@@ -28,20 +28,22 @@ CON
     R           = 0
     W           = 1
 
+
 OBJ
 
-    cfg     : "boardcfg.flip"
-    ser     : "com.serial.terminal.ansi"
-    time    : "time"
-    apds    : "sensor.light.apds9960"
+    cfg:    "boardcfg.flip"
+    time:   "time"
+    ser:    "com.serial.terminal.ansi"
+    apds:   "sensor.light.apds9960"
 
-PUB Main{} | prox, proxint_lo, proxint_hi, proxintpers
 
-    setup{}
+PUB main() | prox, proxint_lo, proxint_hi, proxintpers
 
-    apds.preset_prox{}                          ' setup driver with proximity
+    setup()
+
+    apds.preset_prox()                          ' setup driver with proximity
                                                 '   sensing features enabled
-    apds.prox_int_clear{}                       ' clear existing interrupt
+    apds.prox_int_clear()                       ' clear existing interrupt
 
     ' prox_int_duration(): 0..15
     '   0: triggers an interrupt on every reading, _regardless_ of whether it's
@@ -56,32 +58,33 @@ PUB Main{} | prox, proxint_lo, proxint_hi, proxintpers
     apds.prox_int_set_hi_thresh(64)
 
     ' read back settings, for verification below
-    proxint_lo := apds.prox_int_lo_thresh{}
-    proxint_hi := apds.prox_int_hi_thresh{}
+    proxint_lo := apds.prox_int_lo_thresh()
+    proxint_hi := apds.prox_int_hi_thresh()
 
     proxintpers := apds.prox_int_duration(-2)
 
     ser.printf2(string("\n\rInterrupt thresholds (lo:hi): %d:%d\n\r"), proxint_lo, proxint_hi)
     ser.printf1(string("Proximity interrupt duration: %d cycles"), proxintpers)
-    apds.prox_int_clear{}
+    apds.prox_int_clear()
     repeat
-        repeat until apds.prox_data_rdy{}       ' wait for new dataset
-        prox := apds.prox_data{}
+        repeat until apds.prox_data_rdy()       ' wait for new dataset
+        prox := apds.prox_data()
         ser.position(0, 7)
         ser.str(string("Proximity data: "))     ' show raw data (unsigned 8bit)
         ser.dec(prox)
-        if (apds.prox_interrupt{})              ' show a message if threshold
+        if (apds.prox_interrupt())              ' show a message if threshold
             ser.str(string(" (int)"))           '   is crossed
         else
-            ser.clearline{}
-        if ser.rxcheck{} == "c"                 ' press c to clear the int
-            apds.prox_int_clear{}
+            ser.clearline()
+        if ser.rxcheck() == "c"                 ' press c to clear the int
+            apds.prox_int_clear()
 
-PUB setup{}
+
+PUB setup()
 
     ser.start(SER_BAUD)
     time.msleep(30)
-    ser.clear{}
+    ser.clear()
     ser.strln(string("Serial terminal started"))
     if apds.startx(I2C_SCL, I2C_SDA, I2C_HZ)
         ser.strln(string("APDS9960 driver started"))
@@ -89,9 +92,10 @@ PUB setup{}
         ser.strln(string("APDS9960 driver failed to start - halting"))
         repeat
 
+
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
