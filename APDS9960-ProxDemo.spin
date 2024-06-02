@@ -16,25 +16,13 @@ CON
     _clkmode    = cfg._clkmode
     _xinfreq    = cfg._xinfreq
 
-' -- User-modifiable constants
-    LED         = cfg.LED1
-    SER_BAUD    = 115_200
-
-    I2C_SCL     = 28
-    I2C_SDA     = 29
-    I2C_HZ      = 400_000
-' --
-
-    R           = 0
-    W           = 1
-
 
 OBJ
 
     cfg:    "boardcfg.flip"
     time:   "time"
-    ser:    "com.serial.terminal.ansi"
-    apds:   "sensor.light.apds9960"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    apds:   "sensor.light.apds9960" | SCL=28, SDA=29, I2C_FREQ=400_000
 
 
 PUB main() | prox, proxint_lo, proxint_hi, proxintpers
@@ -63,33 +51,34 @@ PUB main() | prox, proxint_lo, proxint_hi, proxintpers
 
     proxintpers := apds.prox_int_duration(-2)
 
-    ser.printf2(string("\n\rInterrupt thresholds (lo:hi): %d:%d\n\r"), proxint_lo, proxint_hi)
-    ser.printf1(string("Proximity interrupt duration: %d cycles"), proxintpers)
+    ser.printf2(@"\n\rInterrupt thresholds (lo:hi): %d:%d\n\r", proxint_lo, proxint_hi)
+    ser.printf1(@"Proximity interrupt duration: %d cycles", proxintpers)
     apds.prox_int_clear()
     repeat
         repeat until apds.prox_data_rdy()       ' wait for new dataset
         prox := apds.prox_data()
-        ser.position(0, 7)
-        ser.str(string("Proximity data: "))     ' show raw data (unsigned 8bit)
+        ser.pos_xy(0, 7)
+        ser.str(@"Proximity data: ")            ' show raw data (unsigned 8bit)
         ser.dec(prox)
-        if (apds.prox_interrupt())              ' show a message if threshold
-            ser.str(string(" (int)"))           '   is crossed
+        if ( apds.prox_interrupt() )            ' show a message if threshold
+            ser.str(@" (int)")                  '   is crossed
         else
-            ser.clearline()
-        if ser.rxcheck() == "c"                 ' press c to clear the int
+            ser.clear_line()
+        if ( ser.getchar_noblock() == "c" )     ' press c to clear the int
             apds.prox_int_clear()
 
 
 PUB setup()
 
-    ser.start(SER_BAUD)
+    ser.start()
     time.msleep(30)
     ser.clear()
-    ser.strln(string("Serial terminal started"))
-    if apds.startx(I2C_SCL, I2C_SDA, I2C_HZ)
-        ser.strln(string("APDS9960 driver started"))
+    ser.strln(@"Serial terminal started")
+
+    if ( apds.start() )
+        ser.strln(@"APDS9960 driver started")
     else
-        ser.strln(string("APDS9960 driver failed to start - halting"))
+        ser.strln(@"APDS9960 driver failed to start - halting")
         repeat
 
 

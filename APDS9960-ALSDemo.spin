@@ -16,22 +16,13 @@ CON
     _clkmode    = cfg._clkmode
     _xinfreq    = cfg._xinfreq
 
-' -- User-modifiable constants
-    LED         = cfg.LED1
-    SER_BAUD    = 115_200
-
-    I2C_SCL     = 28
-    I2C_SDA     = 29
-    I2C_HZ      = 400_000
-' --
-
 
 OBJ
 
     cfg:    "boardcfg.flip"
     time:   "time"
-    ser:    "com.serial.terminal.ansi"
-    apds:   "sensor.light.apds9960"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    apds:   "sensor.light.apds9960" | SCL=28, SDA=29, I2C_FREQ=400_000
 
 
 PUB main() | w, r, g, b
@@ -50,23 +41,24 @@ PUB main() | w, r, g, b
 '        r := apds.red_data()
 '        g := apds.green_data()
 '        b := apds.blue_data()
-        ser.position(0, 3)
-        ser.printf1(string("White: %04.4x\n\r"), w)
-        ser.printf1(string("Red:   %04.4x\n\r"), r)
-        ser.printf1(string("Green: %04.4x\n\r"), g)
-        ser.printf1(string("Blue:  %04.4x\n\r"), b)
+        ser.pos_xy(0, 3)
+        ser.printf1(@"White: %04.4x\n\r", w)
+        ser.printf1(@"Red:   %04.4x\n\r", r)
+        ser.printf1(@"Green: %04.4x\n\r", g)
+        ser.printf1(@"Blue:  %04.4x\n\r", b)
 
 
 PUB setup()
 
-    ser.start(SER_BAUD)
+    ser.start()
     time.msleep(30)
     ser.clear()
-    ser.strln(string("Serial terminal started"))
-    if apds.startx(I2C_SCL, I2C_SDA, I2C_HZ)
-        ser.strln(string("APDS9960 driver started"))
+    ser.strln(@"Serial terminal started")
+
+    if ( apds.start() )
+        ser.strln(@"APDS9960 driver started")
     else
-        ser.strln(string("APDS9960 driver failed to start - halting"))
+        ser.strln(@"APDS9960 driver failed to start - halting")
         repeat
 
 

@@ -11,6 +11,21 @@
 
 CON
 
+    { default I/O configuration - these can be overridden by the parent object }
+    SCL             = 28
+    SDA             = 29
+    I2C_FREQ        = 100_000
+
+    { Gesture sensor modes }
+    ALS             = 0
+    GEST            = 1
+
+    { Gesture sensor dimension select }
+    BOTH            = 0
+    UPDOWN          = 1
+    LEFTRIGHT       = 2
+
+
     SLAVE_WR        = core.SLAVE_ADDR
     SLAVE_RD        = core.SLAVE_ADDR|1
 
@@ -22,14 +37,6 @@ CON
     R               = 0
     W               = 1
 
-' Gesture sensor modes
-    ALS             = 0
-    GEST            = 1
-
-' Gesture sensor dimension select
-    BOTH            = 0
-    UPDOWN          = 1
-    LEFTRIGHT       = 2
 
 OBJ
 
@@ -47,18 +54,17 @@ PUB null()
 
 
 PUB start(): status
-' Start using "standard" Propeller I2C pins and 100kHz
-    return startx(DEF_SCL, DEF_SDA, DEF_HZ)
+' Start using default I/O settings
+    return startx(SCL, SDA, I2C_FREQ)
 
 
 PUB startx(SCL_PIN, SDA_PIN, I2C_HZ): status
 ' Start using custom I/O settings
-    if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) and I2C_HZ =< core.I2C_MAX_FREQ
-        if (status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ))
+    if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) )
+        if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
             time.msleep(core.TPOR)
-            if (i2c.present(SLAVE_WR))          ' test device bus presence
-                if (dev_id() == core.DEVID_RESP)
-                    return
+            if ( dev_id() == core.DEVID_RESP )
+                return
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
     ' Lastly - make sure you have at least one free core/cog
@@ -167,7 +173,7 @@ PUB als_ena(state): curr_state
         0, 1:
             state := ||(state) << core.AEN
         other:
-            return ((curr_state >> core.AEN) & %1) == 1
+            return ((curr_state >> core.AEN) & 1) == 1
 
     state := (curr_state & core.AEN_MASK) | state
     writereg(core.ENABLE, 1, @state)
@@ -227,7 +233,7 @@ PUB als_int_ena(state): curr_state
         0, 1:
             state := ||(state) << core.AIEN
         other:
-            return ((curr_state >> core.AIEN) & %1) == 1
+            return ((curr_state >> core.AIEN) & 1) == 1
 
     state := (curr_state & core.AIEN_MASK) | state
     writereg(core.ENABLE, 1, @state)
@@ -315,8 +321,8 @@ PUB gest_led_current(mA): curr_setting | ledboost
 '   Valid values: 300, 200, 150, *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
     curr_setting := 0
-    readreg(core.GCONF2, 1, @curr_setting.byte[0])
-    readreg(core.CONFIG2, 1, @curr_setting.byte[1])
+    readreg(core.GCONF2, 1, @curr_setting)
+    readreg(core.CONFIG2, 1, @curr_setting+1)
     case mA
         100, 50, 25, 12_5:
             mA := lookdownz(mA: 100, 50, 25, 12_5) << core.GLDRIVE
@@ -614,7 +620,7 @@ PUB powered(state): curr_state
         0, 1:
             state := ||(state)
         other:
-            return (curr_state & %1) == 1
+            return (curr_state & 1) == 1
 
     state := (curr_state & core.PON_MASK) | state
     writereg(core.ENABLE, 1, @state)
@@ -727,7 +733,7 @@ PUB prox_int_ena(state): curr_state
         0, 1:
             state := ||(state) << core.PIEN
         other:
-            return ((curr_state >> core.PIEN) & %1) == 1
+            return ((curr_state >> core.PIEN) & 1) == 1
 
     state := (curr_state & core.PIEN_MASK) | state
     writereg(core.ENABLE, 1, @state)
