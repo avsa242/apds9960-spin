@@ -4,7 +4,7 @@
     Description:    APDS9960-specific constants
     Author:         Jesse Burt
     Started:        Aug 2, 2020
-    Updated:        Jun 2, 2024
+    Updated:        Jun 3, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -98,7 +98,7 @@ CON
     STATUS              = $93
         CPSAT           = 7
         PGSAT           = 6
-        PINT            = 5
+        PROXINT         = 5
         AINT            = 4
         GINT            = 2
         PVALID          = 1

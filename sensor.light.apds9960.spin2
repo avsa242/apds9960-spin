@@ -1,9 +1,9 @@
 {
 ----------------------------------------------------------------------------------------------------
-    Filename:       sensor.light.apds9960.spin
+    Filename:       sensor.light.apds9960.spin2
     Description:    Driver for the APDS9960 Proximity, Ambient Light, RGB and Gesture sensor
     Author:         Jesse Burt
-    Started:        Aug 2, 2020
+    Started:        Jun 3, 2024
     Updated:        Jun 3, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
@@ -12,8 +12,8 @@
 CON
 
     { default I/O configuration - these can be overridden by the parent object }
-    SCL             = 28
-    SDA             = 29
+    SCL             = 0
+    SDA             = 1
     I2C_FREQ        = 100_000
 
     { Gesture sensor modes }
@@ -40,11 +40,7 @@ CON
 
 OBJ
 
-#ifdef APDS9960_SPIN
-    i2c:    "com.i2c.nocog"                     ' BC I2C engine
-#else
-    i2c:    "com.i2c"                           ' PASM I2C engine
-#endif
+    i2c:    "com.i2c"                           ' I2C engine
     core:   "core.con.apds9960"                 ' APDS9960-specific constants
     time:   "time"                              ' timekeeping methods
 
@@ -60,9 +56,9 @@ PUB start(): status
 
 PUB startx(SCL_PIN, SDA_PIN, I2C_HZ): status
 ' Start using custom I/O settings
-    if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) )
+    if ( lookdown(SCL_PIN: 0..63) and lookdown(SDA_PIN: 0..63) )
         if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
-            time.msleep(core.TPOR)
+            waitms(core.TPOR)
             if ( dev_id() == core.DEVID_RESP )
                 return
     ' if this point is reached, something above failed
@@ -169,9 +165,9 @@ PUB als_ena(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.AEN
+            state := abs(state) << core.AEN
             state := (curr_state & core.AEN_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
@@ -214,7 +210,7 @@ PUB als_int_duration(cycles=-2): curr_setting
             cycles := (curr_setting & core.APERS_MASK) | cycles
             writereg(core.PERS, 1, @cycles)
         other:
-            if ( (curr_setting &= core.APERS_BITS) =< 3 )
+            if ( (curr_setting &= core.APERS_BITS) <= 3 )
                 return curr_setting
             else
                 return ( ((curr_setting & core.APERS_BITS) - 3) * 5 )
@@ -226,9 +222,9 @@ PUB als_int_ena(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.AIEN
+            state := abs(state) << core.AIEN
             state := (curr_state & core.AIEN_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
@@ -434,9 +430,9 @@ PUB gest_ena(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.GEN
+            state := abs(state) << core.GEN
             state := (curr_state & core.GEN_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
@@ -525,9 +521,9 @@ PUB gest_int_ena(state=-2): curr_state
 '   Any other value polls the device and rturns the current setting
     curr_state := 0
     readreg(core.GCONF4, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.GIEN
+            state := abs(state) << core.GIEN
             state := (curr_state & core.GIEN_MASK) | state
             writereg(core.GCONF4, 1, @state)
         other:
@@ -605,9 +601,9 @@ PUB powered(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state)
+            state := abs(state)
             state := (curr_state & core.PON_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
@@ -635,9 +631,9 @@ PUB prox_det_ena(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.PEN
+            state := abs(state) << core.PEN
             state := (curr_state & core.PEN_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
@@ -717,9 +713,9 @@ PUB prox_int_ena(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.PIEN
+            state := abs(state) << core.PIEN
             state := (curr_state & core.PIEN_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
@@ -789,9 +785,9 @@ PUB sleep_after_ints(enable=-2): curr_setting
 '   NOTE: To return to normal operating mode, clear the interrupt
     curr_setting := 0
     readreg(core.CONFIG3, 1, @curr_setting)
-    case ||(enable)
+    case abs(enable)
         0, 1:
-            enable := ||(enable) << core.SAI
+            enable := abs(enable) << core.SAI
             enable := (curr_setting & core.SAI_MASK) | enable
             writereg(core.CONFIG3, 1, @enable)
         other:
@@ -819,9 +815,9 @@ PUB wait_timer_ena(state=-2): curr_state
 '   Any other value polls the device and returns the current setting
     curr_state := 0
     readreg(core.ENABLE, 1, @curr_state)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.WEN
+            state := abs(state) << core.WEN
             state := (curr_state & core.WEN_MASK) | state
             writereg(core.ENABLE, 1, @state)
         other:
