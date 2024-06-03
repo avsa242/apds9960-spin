@@ -163,7 +163,7 @@ PUB als_data_rdy(): flag
     return ( ((flag >> core.AVALID) & 1) == 1 )
 
 
-PUB als_ena(state): curr_state
+PUB als_ena(state=-2): curr_state
 ' Enable ambient light source sensor/ADC
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -178,7 +178,7 @@ PUB als_ena(state): curr_state
             return ( ((curr_state >> core.AEN) & 1) == 1 )
 
 
-PUB als_gain(factor): curr_gain
+PUB als_gain(factor=-2): curr_gain
 ' Set ambient light sensor gain multiplier
 '   Valid values: *1, 4, 16, 64
 '   Any other value polls the device and returns the current setting
@@ -194,7 +194,7 @@ PUB als_gain(factor): curr_gain
             return lookupz(curr_gain: 1, 4, 16, 64)
 
 
-PUB als_int_duration(cycles): curr_setting
+PUB als_int_duration(cycles=-2): curr_setting
 ' Set interrupt duration, in cycles
 '   Defines how many consecutive measurements must be outside the interrupt threshold
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
@@ -220,7 +220,7 @@ PUB als_int_duration(cycles): curr_setting
                 return ( ((curr_setting & core.APERS_BITS) - 3) * 5 )
 
 
-PUB als_int_ena(state): curr_state
+PUB als_int_ena(state=-2): curr_state
 ' Enable ALS interrupt source
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -263,7 +263,7 @@ PUB als_int_set_lo_thresh(thresh)
     writereg(core.AILTL, 2, @thresh)
 
 
-PUB als_integr_time(usecs): curr_setting
+PUB als_integr_time(usecs=-2): curr_setting
 ' Set ALS integration time, in microseconds
 '   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
 '   Any other value polls the device and returns the current setting
@@ -312,7 +312,7 @@ PUB gest_fifo_overflow(): flag
     flag := ( ((flag >> core.GFOV) & 1) == 1 )
 
 
-PUB gest_led_current(mA): curr_setting | ledboost
+PUB gest_led_current(mA=-2): curr_setting | ledboost
 ' Set LED drive current in gesture mode, in milliamperes
 '   Valid values: 300, 200, 150, *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
@@ -339,7 +339,7 @@ PUB gest_led_current(mA): curr_setting | ledboost
     writereg(core.CONFIG2, 1, @ledboost)
 
 
-PUB gest_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
+PUB gest_pulse_cnt(nr_pulses=-2): curr_setting     'XXX tentatively named
 ' Set gesture LED pulse count, generated on LDR 'XXX tentative summary
 '   Valid values: 1..64
 '   Any other value polls the device and returns the current setting
@@ -353,7 +353,7 @@ PUB gest_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
         other:
             return ( (curr_setting & core.GPULSE_BITS) + 1 )
 
-PUB gest_pulse_len(usec): curr_setting
+PUB gest_pulse_len(usec=-2): curr_setting
 ' Set gesture LED pulse length, generated on LDR, in microseconds 'XXX tentative summary
 '   Valid values: 4, *8, 16, 32
 '   Any other value polls the device and returns the current setting
@@ -410,7 +410,7 @@ PUB gest_data_up(): data
     readreg(core.GFIFO_U, 1, @data)
 
 
-PUB gest_dims(dim_select): curr_setting
+PUB gest_dims(dim_select=-2): curr_setting
 ' Select which sensor pairs are used to detect gestures
 '   Valid values:
 '       BOTH (0): Both Up/Down and Left/Right sensors active
@@ -426,7 +426,7 @@ PUB gest_dims(dim_select): curr_setting
             return (curr_setting & core.GDIMS_BITS)
 
 
-PUB gest_ena(state): curr_state
+PUB gest_ena(state=-2): curr_state
 ' Enable gesture sensing
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -441,7 +441,7 @@ PUB gest_ena(state): curr_state
             return ( ((curr_state >> core.GEN) & 1) == 1 )
 
 
-PUB gest_end_duration(cycles): curr_setting
+PUB gest_end_duration(cycles=-2): curr_setting
 ' Set gesture exit persistence filter (number of gesture end occurences before gesture state machine is exited) 'XXX tentative summary
 '   Valid values: 1, 2, 4, 7
 '   Any other value polls the device and returns the current setting
@@ -470,7 +470,7 @@ PUB gest_set_end_thresh(thresh)
     writereg(core.GEXTH, 1, @thresh)
 
 
-PUB gest_fifo_thresh(level): curr_thr
+PUB gest_fifo_thresh(level=-2): curr_thr
 ' Set gesture FIFO threshold for asserting an interrupt
 '   Valid values: *1, 4, 8, 16
 '   Any other value polls the device and returns the current setting
@@ -486,7 +486,7 @@ PUB gest_fifo_thresh(level): curr_thr
             curr_thr := (curr_thr >> core.GFIFOTH) & core.GFIFOTH_BITS
             return lookupz(curr_thr: 1, 4, 8, 16)
 
-PUB gest_gain(factor): curr_setting
+PUB gest_gain(factor=-2): curr_setting
 ' Set proximity sensor gain in gesture mode
 '   Valid values: *1, 2, 4, 8
 '   Any other value polls the device and returns the current setting
@@ -516,7 +516,7 @@ PUB gest_interrupt(): flag
     return ( ((flag >> core.GINT) & 1) == 1 )
 
 
-PUB gest_int_ena(state): curr_state
+PUB gest_int_ena(state=-2): curr_state
 ' Enable gesture sensor interrupt source
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and rturns the current setting
@@ -545,7 +545,7 @@ PUB gest_set_start_thresh(thresh)
     writereg(core.GPENTH, 1, @thresh)
 
 
-PUB gest_wait_time(msecs): curr_setting
+PUB gest_wait_time(msecs=-2): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in milliseconds
 '   Valid values: *0, 2_8 (2.8), 5_6 (5.6), 8_4 (8.4), 14_0 (14.0), 22_4 (22.4), 30_8 (30.8), 39_2 (39.2)
 '   Any other value polls the device and returns the current setting
@@ -562,7 +562,7 @@ PUB gest_wait_time(msecs): curr_setting
             return lookupz(curr_setting: 0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2)
 
 
-PUB led_current(mA): curr_setting
+PUB led_current(mA=-2): curr_setting
 ' Set LED drive current, used in Proximity and Gesture sensing modes, in milliamperes
 '   Valid values: *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
@@ -578,7 +578,7 @@ PUB led_current(mA): curr_setting
             return lookupz(curr_setting: 100, 50, 25, 12_5)
 
 
-PUB opmode(mode): curr_mode
+PUB opmode(mode=-2): curr_mode
 ' Set sensor operating mode
 '   Valid values:
 '       ALS (0): ALS/Proximity/RGB mode
@@ -594,7 +594,7 @@ PUB opmode(mode): curr_mode
             return ( curr_mode & 1 )
 
 
-PUB powered(state): curr_state
+PUB powered(state=-2): curr_state
 ' Enable device power
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -624,7 +624,7 @@ PUB prox_data_rdy(): flag
     return ( ((flag >> core.PVALID) & 1) == 1 )
 
 
-PUB prox_det_ena(state): curr_state
+PUB prox_det_ena(state=-2): curr_state
 ' Enable proximity sensing/detection
 '   Valid values: TRUE (-1 or 1), *FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -640,7 +640,7 @@ PUB prox_det_ena(state): curr_state
 
 
 
-PUB prox_gain(factor): curr_gain
+PUB prox_gain(factor=-2): curr_gain
 ' Set proximity sensor gain multiplier
 '   Valid values: *1, 2, 4, 8
 '   Any other value polls the device and returns the current setting
@@ -661,7 +661,7 @@ PUB prox_int_clear()
     writereg(core.PICLEAR, 0, 0)
 
 
-PUB prox_integr_time(usecs): curr_setting
+PUB prox_integr_time(usecs=-2): curr_setting
 ' Set proximity sensor integration time, in microseconds
 '   Valid values: 4, *8, 16, 32
 '   Any other value polls the device and returns the current setting
@@ -685,7 +685,7 @@ PUB prox_interrupt(): flag
     return ( ((flag >> core.PINT) & 1) == 1 )
 
 
-PUB prox_int_duration(cycles): curr_setting
+PUB prox_int_duration(cycles=-2): curr_setting
 ' Set interrupt duration, in cycles
 '   Defines how many consecutive measurements must be outside the interrupt threshold
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
@@ -705,7 +705,7 @@ PUB prox_int_duration(cycles): curr_setting
             return (curr_setting >> core.PPERS) & core.PPERS_BITS
 
 
-PUB prox_int_ena(state): curr_state
+PUB prox_int_ena(state=-2): curr_state
 ' Enable Proximity sensor interrupt source
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -749,7 +749,7 @@ PUB prox_int_set_lo_thresh(thresh)
     writereg(core.PILT, 1, @thresh)
 
 
-PUB prox_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
+PUB prox_pulse_cnt(nr_pulses=-2): curr_setting     'XXX tentatively named
 ' Set proximity pulse count, generated on LDR   'XXX tentative summary
 '   Valid values: 1..64
 '   Any other value polls the device and returns the current setting
@@ -776,7 +776,7 @@ PUB reset()
 ' Reset the device
 
 
-PUB sleep_after_ints(enable): curr_setting
+PUB sleep_after_ints(enable=-2): curr_setting
 ' Enter low power mode when an interrupt is asserted
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting
@@ -792,7 +792,7 @@ PUB sleep_after_ints(enable): curr_setting
             return ( ((curr_setting >> core.SAI) & 1) == 1 )
 
 
-PUB wait_time(usecs): curr_setting
+PUB wait_time(usecs=-2): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in microseconds
 '   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
 '   Any other value polls the device and returns the current setting
@@ -807,7 +807,7 @@ PUB wait_time(usecs): curr_setting
             return ( (256-curr_setting) * 2_780 )
 
 
-PUB wait_timer_ena(state): curr_state
+PUB wait_timer_ena(state=-2): curr_state
 ' Enable inter-measurement wait timer
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the device and returns the current setting

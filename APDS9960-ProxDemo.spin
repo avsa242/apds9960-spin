@@ -49,7 +49,7 @@ PUB main() | prox, proxint_lo, proxint_hi, proxintpers
     proxint_lo := apds.prox_int_lo_thresh()
     proxint_hi := apds.prox_int_hi_thresh()
 
-    proxintpers := apds.prox_int_duration(-2)
+    proxintpers := apds.prox_int_duration()
 
     ser.printf2(@"\n\rInterrupt thresholds (lo:hi): %d:%d\n\r", proxint_lo, proxint_hi)
     ser.printf1(@"Proximity interrupt duration: %d cycles", proxintpers)
