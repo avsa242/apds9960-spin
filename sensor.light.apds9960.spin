@@ -112,7 +112,7 @@ PUB preset_als()
     wait_timer_ena(false)
 
 
-PUB preset_prox()
+PUB preset_proximity_detect()
 ' Set defaults for using the sensor in proximity sensor mode
     powered(true)
     als_ena(false)
@@ -128,7 +128,7 @@ PUB preset_prox()
     wait_timer_ena(false)
 
 
-PUB preset_gest()
+PUB preset_gesture_detect()
 ' Set defaults for using the sensor in gesture sensor mode
     powered(true)
     gest_end_duration(1)
@@ -267,7 +267,8 @@ PUB als_integr_time(usecs=-2): curr_setting
 ' Set ALS integration time, in microseconds
 '   Valid values: *2_780..712_000, in multiples of 2_780 (rounded to nearest result)
 '   Any other value polls the device and returns the current setting
-'   NOTE: This setting only applies to the ALS/RGB engine. The proximity and gesture engines are not affected.
+'   NOTE: This setting only applies to the ALS/RGB engine. The proximity and gesture engines
+'       are not affected.
     case usecs
         2_780..712_000:
             usecs := 256-(usecs / 2_780)
@@ -301,7 +302,8 @@ PUB green_data(): gdata
 PUB gest_fifo_nr_unread(): nr_samples
 ' Number of samples available in FIFO
 '   Returns: 8-bit unsigned
-'   NOTE: One sample is a complete set of U, D, L, R data. To reduce the level reported here, a complete dataset must be read
+'   NOTE: One sample is a complete set of U, D, L, R data. To reduce the level reported here,
+'       a complete dataset must be read.
     readreg(core.GFLVL, 1, @nr_samples)
 
 
@@ -371,7 +373,7 @@ PUB gest_pulse_len(usec=-2): curr_setting
 
 PUB gest_data(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
 ' All gesture sensor source data
-'   ptr_u, ptr_d, ptr_l, ptr_r: pointers at least 1 byte in size, each
+'   ptr_u, ptr_d, ptr_l, ptr_r: pointers to variables at least 1 byte in size, each
     readreg(core.GFIFO_U, 4, @tmp)
     byte[ptr_u] := tmp.byte[0]
     byte[ptr_d] := tmp.byte[1]
@@ -393,7 +395,7 @@ PUB gest_data_left(): data
 
 PUB gest_data_rdy(): flag
 ' Flag indicating gesture FIFO contains valid data
-'   NOTE: Flag will be set when FIFO level exceeds threshold set with GestureFIFOThresh()
+'   NOTE: Flag will be set when FIFO level exceeds threshold set with gest_fifo_thresh()
     readreg(core.GSTATUS, 1, @flag)
     return ( (flag & 1) == 1 )
 
@@ -442,7 +444,8 @@ PUB gest_ena(state=-2): curr_state
 
 
 PUB gest_end_duration(cycles=-2): curr_setting
-' Set gesture exit persistence filter (number of gesture end occurences before gesture state machine is exited) 'XXX tentative summary
+' Set gesture exit persistence filter (number of gesture end occurences before gesture
+'   state machine is exited) 'XXX tentative summary
 '   Valid values: 1, 2, 4, 7
 '   Any other value polls the device and returns the current setting
     curr_setting := 0
@@ -540,16 +543,18 @@ PUB gest_start_thresh(): thresh
 PUB gest_set_start_thresh(thresh)
 ' Set threshold used to determine if a gesture has started
 '   Valid values: 0..255
-'   NOTE: This value is compared with output from ProxData(), to determine if a gesture has started
+'   NOTE: This value is compared with output from prox_data(), to determine if a gesture has started
     thresh := 0 #> thresh <# 255
     writereg(core.GPENTH, 1, @thresh)
 
 
 PUB gest_wait_time(msecs=-2): curr_setting
 ' Set inter-measurement wait timer (low-power mode between measurements), in milliseconds
-'   Valid values: *0, 2_8 (2.8), 5_6 (5.6), 8_4 (8.4), 14_0 (14.0), 22_4 (22.4), 30_8 (30.8), 39_2 (39.2)
+'   Valid values: *0, 2_8 (2.8), 5_6 (5.6), 8_4 (8.4), 14_0 (14.0), 22_4 (22.4), 30_8 (30.8),
+'       39_2 (39.2)
 '   Any other value polls the device and returns the current setting
-'   NOTE: This setting only applies to the Gesture engine. The proximity and ALS engines are not affected.
+'   NOTE: This setting only applies to the Gesture engine. The proximity and ALS engines
+'       are not affected.
     curr_setting := 0
     readreg(core.GCONF2, 1, @curr_setting)
     case msecs
@@ -691,8 +696,9 @@ PUB prox_int_duration(cycles=-2): curr_setting
 '   before an interrupt is actually triggered (e.g., to reduce false positives)
 '   Valid values:
 '      *0 - _Every measurement_ triggers an interrupt, _regardless_
-'       1 - Every measurement _outside your set threshold_ triggers an interrupt
-'       2..15 - Must be 'n' consecutive measurements outside the set threshold to trigger an interrupt
+'       1 - Every measurement _outside the set threshold_ triggers an interrupt
+'       2..15 - Must be 'n' consecutive measurements outside the set threshold to trigger
+'           an interrupt
 '   Any other value polls the device and returns the current setting
     curr_setting := 0
     readreg(core.PERS, 1, @curr_setting)
@@ -851,12 +857,12 @@ PRI readreg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt, tmp
 
 PRI writereg(reg_nr, nr_bytes, ptr_buff) | cmd_pkt, tmp
 ' Write nr_bytes to the slave device
-    case reg_nr                                             ' Basic register validation
+    case reg_nr                                 ' Basic register validation
         core.RAM..core.ATIME, core.WTIME..core.AIHTH, core.PILT, core.PIHT, ...
         core.PERS..core.CONTROL, core.POFFSET_UR..core.GOFFSET_L, core.GOFFSET_R..core.GCONF4:
         core.CONFIG2:
-            byte[ptr_buff][0] |= 1                         ' APDS9960: Reserved bit that must always be set
-        core.IFORCE..core.AICLEAR:                          ' Commands with no parameters
+            byte[ptr_buff][0] |= 1              ' Reserved bit that must always be set
+        core.IFORCE..core.AICLEAR:              ' Commands with no parameters
             cmd_pkt.byte[0] := SLAVE_WR
             cmd_pkt.byte[1] := reg_nr
             i2c.start()

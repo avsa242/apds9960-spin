@@ -29,7 +29,7 @@ PUB main() | prox, proxint_lo, proxint_hi, proxintpers
 
     setup()
 
-    apds.preset_prox()                          ' setup driver with proximity
+    apds.preset_proximity_detect()              ' setup driver with proximity
                                                 '   sensing features enabled
     apds.prox_int_clear()                       ' clear existing interrupt
 

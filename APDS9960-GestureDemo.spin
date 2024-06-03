@@ -39,7 +39,7 @@ VAR
 PUB main() | fifo_level, i
 
     setup()
-    apds.preset_gest()
+    apds.preset_gesture_detect()
     apds.gest_int_ena(true)
     apds.gest_fifo_thresh(1)
     apds.gest_set_start_thresh(40)
