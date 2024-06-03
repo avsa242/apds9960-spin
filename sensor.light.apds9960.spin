@@ -730,13 +730,13 @@ PUB prox_int_ena(state=-2): curr_state
 PUB prox_int_hi_thresh(): thresh
 ' Get proximity sensor interrupt high threshold
     thresh := 0
-    readreg(core.PIHT, 1, thresh)
+    readreg(core.PIHT, 1, @thresh)
 
 
 PUB prox_int_lo_thresh(): thresh
 ' Get proximity sensor interrupt low threshold
     thresh := 0
-    readreg(core.PILT, 1, thresh)
+    readreg(core.PILT, 1, @thresh)
 
 
 PUB prox_int_set_hi_thresh(thresh)

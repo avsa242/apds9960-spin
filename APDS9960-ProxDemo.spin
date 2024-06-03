@@ -25,7 +25,7 @@ OBJ
     apds:   "sensor.light.apds9960" | SCL=28, SDA=29, I2C_FREQ=400_000
 
 
-PUB main() | prox, proxint_lo, proxint_hi, proxintpers
+PUB main() | prox, proxint_lo, proxint_hi, proxint_dur
 
     setup()
 
@@ -49,17 +49,16 @@ PUB main() | prox, proxint_lo, proxint_hi, proxintpers
     proxint_lo := apds.prox_int_lo_thresh()
     proxint_hi := apds.prox_int_hi_thresh()
 
-    proxintpers := apds.prox_int_duration()
+    proxint_dur := apds.prox_int_duration()
 
     ser.printf2(@"\n\rInterrupt thresholds (lo:hi): %d:%d\n\r", proxint_lo, proxint_hi)
-    ser.printf1(@"Proximity interrupt duration: %d cycles", proxintpers)
+    ser.printf1(@"Proximity interrupt duration: %d cycles", proxint_dur)
     apds.prox_int_clear()
     repeat
         repeat until apds.prox_data_rdy()       ' wait for new dataset
         prox := apds.prox_data()
         ser.pos_xy(0, 7)
-        ser.str(@"Proximity data: ")            ' show raw data (unsigned 8bit)
-        ser.dec(prox)
+        ser.printf1(@"Proximity data: %d", prox)' show raw data (unsigned 8bit)
         if ( apds.prox_interrupt() )            ' show a message if threshold
             ser.str(@" (int)")                  '   is crossed
         else
