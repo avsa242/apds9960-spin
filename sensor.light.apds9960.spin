@@ -4,7 +4,7 @@
     Description:    Driver for the APDS9960 Proximity, Ambient Light, RGB and Gesture sensor
     Author:         Jesse Burt
     Started:        Aug 2, 2020
-    Updated:        Jun 2, 2024
+    Updated:        Jun 3, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -160,7 +160,7 @@ PUB als_data_rdy(): flag
 '   Returns: TRUE (-1) or FALSE (0)
     flag := 0
     readreg(core.STATUS, 1, @flag)
-    return ((flag >> core.AVALID) & 1) == 1
+    return ( ((flag >> core.AVALID) & 1) == 1 )
 
 
 PUB als_ena(state): curr_state
@@ -172,11 +172,10 @@ PUB als_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.AEN
+            state := (curr_state & core.AEN_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return ((curr_state >> core.AEN) & 1) == 1
-
-    state := (curr_state & core.AEN_MASK) | state
-    writereg(core.ENABLE, 1, @state)
+            return ( ((curr_state >> core.AEN) & 1) == 1 )
 
 
 PUB als_gain(factor): curr_gain
@@ -188,12 +187,11 @@ PUB als_gain(factor): curr_gain
     case factor
         1, 4, 16, 64:
             factor := lookdownz(factor: 1, 4, 16, 64)
+            factor := (curr_gain & core.AGAIN_MASK) | factor
+            writereg(core.CONTROL, 1, @factor)
         other:
             curr_gain &= core.AGAIN_BITS
             return lookupz(curr_gain: 1, 4, 16, 64)
-
-    factor := (curr_gain & core.AGAIN_MASK) | factor
-    writereg(core.CONTROL, 1, @factor)
 
 
 PUB als_int_duration(cycles): curr_setting
@@ -210,17 +208,16 @@ PUB als_int_duration(cycles): curr_setting
     curr_setting := 0
     readreg(core.PERS, 1, @curr_setting)
     case cycles
-        0..3:
-        5..60:
-            cycles := (cycles / 5) + 3
+        0..3, 5..60:
+            if ( cycles > 3 )
+                cycles := (cycles / 5) + 3
+            cycles := (curr_setting & core.APERS_MASK) | cycles
+            writereg(core.PERS, 1, @cycles)
         other:
-            if (curr_setting &= core.APERS_BITS) =< 3
+            if ( (curr_setting &= core.APERS_BITS) =< 3 )
                 return curr_setting
             else
-                return ((curr_setting & core.APERS_BITS) - 3) * 5
-
-    cycles := (curr_setting & core.APERS_MASK) | cycles
-    writereg(core.PERS, 1, @cycles)
+                return ( ((curr_setting & core.APERS_BITS) - 3) * 5 )
 
 
 PUB als_int_ena(state): curr_state
@@ -232,11 +229,10 @@ PUB als_int_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.AIEN
+            state := (curr_state & core.AIEN_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return ((curr_state >> core.AIEN) & 1) == 1
-
-    state := (curr_state & core.AIEN_MASK) | state
-    writereg(core.ENABLE, 1, @state)
+            return ( ((curr_state >> core.AIEN) & 1) == 1 )
 
 
 PUB als_int_hi_thresh(): thresh
@@ -279,7 +275,7 @@ PUB als_integr_time(usecs): curr_setting
         other:
             curr_setting := 0
             readreg(core.ATIME, 1, @curr_setting)
-            return (256-curr_setting) * 2_780
+            return ( (256-curr_setting) * 2_780 )
 
 
 PUB blue_data(): bdata
@@ -313,7 +309,7 @@ PUB gest_fifo_overflow(): flag
 ' Flag indicating gesture FIFO has overflowed
 '   Returns: TRUE (-1) if FIFO overflowed (data has been lost), FALSE (0) otherwise
     readreg(core.GSTATUS, 1, @flag)
-    flag := ((flag >> core.GFOV) & 1) == 1
+    flag := ( ((flag >> core.GFOV) & 1) == 1 )
 
 
 PUB gest_led_current(mA): curr_setting | ledboost
@@ -332,7 +328,7 @@ PUB gest_led_current(mA): curr_setting | ledboost
         other:
             curr_setting.byte[0] := (curr_setting.byte[0] >> core.GLDRIVE) & core.GLDRIVE_BITS
             curr_setting.byte[1] := (curr_setting.byte[1] >> core.LED_BOOST) & core.LED_BOOST_BITS
-            if curr_setting.byte[1]
+            if ( curr_setting.byte[1] )
                 return lookdown(curr_setting.byte[1]: 150, 200, 300)
             else
                 return lookupz(curr_setting.byte[0]: 100, 50, 25, 12_5)
@@ -352,12 +348,10 @@ PUB gest_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
     case nr_pulses
         1..64:
             nr_pulses -= 1
+            nr_pulses := (curr_setting & core.GPULSE_MASK) | nr_pulses
+            writereg(core.GPULSECNT, 1, @nr_pulses)
         other:
-            return (curr_setting & core.GPULSE_BITS) + 1
-
-    nr_pulses := (curr_setting & core.GPULSE_MASK) | nr_pulses
-    writereg(core.GPULSECNT, 1, @nr_pulses)
-
+            return ( (curr_setting & core.GPULSE_BITS) + 1 )
 
 PUB gest_pulse_len(usec): curr_setting
 ' Set gesture LED pulse length, generated on LDR, in microseconds 'XXX tentative summary
@@ -368,12 +362,11 @@ PUB gest_pulse_len(usec): curr_setting
     case usec
         4, 8, 16, 32:
             usec := lookdownz(usec: 4, 8, 16, 32) << core.GPLEN
+            usec := (curr_setting & core.GPLEN_MASK) | usec
+            writereg(core.GPULSECNT, 1, @usec)
         other:
-            curr_setting := (curr_setting >> core.GPLEN) & core.GPLEN_BITS
+            curr_setting := ( (curr_setting >> core.GPLEN) & core.GPLEN_BITS )
             return lookupz(curr_setting: 4, 8, 16, 32)
-
-    usec := (curr_setting & core.GPLEN_MASK) | usec
-    writereg(core.GPULSECNT, 1, @usec)
 
 
 PUB gest_data(ptr_u, ptr_d, ptr_l, ptr_r) | tmp
@@ -402,7 +395,7 @@ PUB gest_data_rdy(): flag
 ' Flag indicating gesture FIFO contains valid data
 '   NOTE: Flag will be set when FIFO level exceeds threshold set with GestureFIFOThresh()
     readreg(core.GSTATUS, 1, @flag)
-    return (flag & 1) == 1
+    return ( (flag & 1) == 1 )
 
 
 PUB gest_data_right(): data
@@ -442,11 +435,10 @@ PUB gest_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.GEN
+            state := (curr_state & core.GEN_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return ((curr_state >> core.GEN) & 1) == 1
-
-    state := (curr_state & core.GEN_MASK) | state
-    writereg(core.ENABLE, 1, @state)
+            return ( ((curr_state >> core.GEN) & 1) == 1 )
 
 
 PUB gest_end_duration(cycles): curr_setting
@@ -458,11 +450,10 @@ PUB gest_end_duration(cycles): curr_setting
     case cycles
         1, 2, 4, 7:
             cycles := lookdownz(cycles: 1, 2, 4, 7)
+            cycles := (curr_setting & core.GEXPERS_MASK) | cycles
+            writereg(core.GCONF1, 1, @cycles)
         other:
             return lookupz(curr_setting: 1, 2, 4, 7)
-
-    cycles := (curr_setting & core.GEXPERS_MASK) | cycles
-    writereg(core.GCONF1, 1, @cycles)
 
 
 PUB gest_end_thresh(): thresh
@@ -489,13 +480,11 @@ PUB gest_fifo_thresh(level): curr_thr
     case level
         1, 4, 8, 16:
             level := lookdownz(level: 1, 4, 8, 16) << core.GFIFOTH
+            level := (curr_thr & core.GFIFOTH_MASK) | level
+            writereg(core.GCONF1, 1, @level)
         other:
             curr_thr := (curr_thr >> core.GFIFOTH) & core.GFIFOTH_BITS
             return lookupz(curr_thr: 1, 4, 8, 16)
-
-    level := (curr_thr & core.GFIFOTH_MASK) | level
-    writereg(core.GCONF1, 1, @level)
-
 
 PUB gest_gain(factor): curr_setting
 ' Set proximity sensor gain in gesture mode
@@ -506,12 +495,11 @@ PUB gest_gain(factor): curr_setting
     case factor
         1, 2, 4, 8:
             factor := lookdownz(factor: 1, 2, 4, 8) << core.GGAIN
+            factor := (curr_setting & core.GGAIN_MASK) | factor
+            writereg(core.GCONF2, 1, @factor)
         other:
             curr_setting := (curr_setting >> core.GGAIN) & core.GGAIN_BITS
             return lookupz(curr_setting: 1, 2, 4, 8)
-
-    factor := (curr_setting & core.GGAIN_MASK) | factor
-    writereg(core.GCONF2, 1, @factor)
 
 
 PUB gest_int_clear() | tmp
@@ -525,7 +513,7 @@ PUB gest_interrupt(): flag
 ' Flag indicating gesture interrupt asserted
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
     readreg(core.STATUS, 1, @flag)
-    return ((flag >> core.GINT) & 1) == 1
+    return ( ((flag >> core.GINT) & 1) == 1 )
 
 
 PUB gest_int_ena(state): curr_state
@@ -537,11 +525,10 @@ PUB gest_int_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.GIEN
+            state := (curr_state & core.GIEN_MASK) | state
+            writereg(core.GCONF4, 1, @state)
         other:
-            return ((curr_state >> core.GIEN) & 1) == 1
-
-    state := (curr_state & core.GIEN_MASK) | state
-    writereg(core.GCONF4, 1, @state)
+            return ( ((curr_state >> core.GIEN) & 1) == 1 )
 
 
 PUB gest_start_thresh(): thresh
@@ -568,12 +555,11 @@ PUB gest_wait_time(msecs): curr_setting
     case msecs
         0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2:
             msecs := lookdownz(msecs: 0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2)
+            msecs := (curr_setting & core.GWTIME_MASK) | msecs
+            writereg(core.GCONF2, 1, @msecs)
         other:
             curr_setting := curr_setting & core.GWTIME_BITS
             return lookupz(curr_setting: 0, 2_8, 5_6, 8_4, 14_0, 22_4, 30_8, 39_2)
-
-    msecs := (curr_setting & core.GWTIME_MASK) | msecs
-    writereg(core.GCONF2, 1, @msecs)
 
 
 PUB led_current(mA): curr_setting
@@ -585,12 +571,11 @@ PUB led_current(mA): curr_setting
     case mA
         100, 50, 25, 12_5:
             mA := lookdownz(mA: 100, 50, 25, 12_5) << core.LDRIVE
+            mA := (curr_setting & core.LDRIVE_MASK) | mA
+            writereg(core.CONTROL, 1, @mA)
         other:
             curr_setting := (curr_setting >> core.LDRIVE) & core.LDRIVE_BITS
             return lookupz(curr_setting: 100, 50, 25, 12_5)
-
-    mA := (curr_setting & core.LDRIVE_MASK) | mA
-    writereg(core.CONTROL, 1, @mA)
 
 
 PUB opmode(mode): curr_mode
@@ -603,11 +588,10 @@ PUB opmode(mode): curr_mode
     readreg(core.GCONF4, 1, @curr_mode)
     case mode
         ALS, GEST:
+            mode := (curr_mode & core.GMODE_MASK) | mode
+            writereg(core.GCONF4, 1, @mode)
         other:
-            return curr_mode & 1
-
-    mode := (curr_mode & core.GMODE_MASK) | mode
-    writereg(core.GCONF4, 1, @mode)
+            return ( curr_mode & 1 )
 
 
 PUB powered(state): curr_state
@@ -619,16 +603,16 @@ PUB powered(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state)
+            state := (curr_state & core.PON_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return (curr_state & 1) == 1
-
-    state := (curr_state & core.PON_MASK) | state
-    writereg(core.ENABLE, 1, @state)
+            return ( (curr_state & 1) == 1 )
 
 
 PUB prox_data(): pdata
 ' Read proximity sensor data
 '   Returns: 8bit unsigned
+    pdata := 0
     readreg(core.PDATA, 1, @pdata)
 
 
@@ -637,7 +621,7 @@ PUB prox_data_rdy(): flag
 '   Returns: TRUE (-1) or FALSE (0)
     flag := 0
     readreg(core.STATUS, 1, @flag)
-    return ((flag >> core.PVALID) & 1) == 1
+    return ( ((flag >> core.PVALID) & 1) == 1 )
 
 
 PUB prox_det_ena(state): curr_state
@@ -649,11 +633,11 @@ PUB prox_det_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.PEN
+            state := (curr_state & core.PEN_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return ((curr_state >> core.PEN) & 1) == 1
+            return ( ((curr_state >> core.PEN) & 1) == 1 )
 
-    state := (curr_state & core.PEN_MASK) | state
-    writereg(core.ENABLE, 1, @state)
 
 
 PUB prox_gain(factor): curr_gain
@@ -665,12 +649,11 @@ PUB prox_gain(factor): curr_gain
     case factor
         1, 2, 4, 8:
             factor := lookdownz(factor: 1, 2, 4, 8) << core.PGAIN
+            factor := (curr_gain & core.PGAIN_MASK) | factor
+            writereg(core.CONTROL, 1, @factor)
         other:
             curr_gain := (curr_gain >> core.PGAIN) & core.PGAIN_BITS
             return lookupz(curr_gain: 1, 2, 4, 8)
-
-    factor := (curr_gain & core.PGAIN_MASK) | factor
-    writereg(core.CONTROL, 1, @factor)
 
 
 PUB prox_int_clear()
@@ -687,19 +670,19 @@ PUB prox_integr_time(usecs): curr_setting
     case usecs
         4, 8, 16, 32:
             usecs := lookdownz(usecs: 4, 8, 16, 32) << core.PPLEN
+            usecs := (curr_setting & core.PPLEN_MASK) | usecs
+            writereg(core.PPULSECNT, 1, @usecs)
         other:
             curr_setting := (curr_setting >> core.PPLEN) & core.PPLEN_BITS
             return lookupz(curr_setting: 4, 8, 16, 32)
 
-    usecs := (curr_setting & core.PPLEN_MASK) | usecs
-    writereg(core.PPULSECNT, 1, @usecs)
 
 
 PUB prox_interrupt(): flag
 ' Flag indicating proximity sensor interrupt
 '   Returns: TRUE (-1) if interrupt asserted, FALSE (0) otherwise
     readreg(core.STATUS, 1, @flag)
-    return ((flag >> core.PINT) & 1) == 1
+    return ( ((flag >> core.PINT) & 1) == 1 )
 
 
 PUB prox_int_duration(cycles): curr_setting
@@ -716,11 +699,10 @@ PUB prox_int_duration(cycles): curr_setting
     case cycles
         0..15:
             cycles <<= core.PPERS
+            cycles := (curr_setting & core.PPERS_MASK) | cycles
+            writereg(core.PERS, 1, @cycles)
         other:
             return (curr_setting >> core.PPERS) & core.PPERS_BITS
-
-    cycles := (curr_setting & core.PPERS_MASK) | cycles
-    writereg(core.PERS, 1, @cycles)
 
 
 PUB prox_int_ena(state): curr_state
@@ -732,11 +714,11 @@ PUB prox_int_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.PIEN
+            state := (curr_state & core.PIEN_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return ((curr_state >> core.PIEN) & 1) == 1
+            return ( ((curr_state >> core.PIEN) & 1) == 1 )
 
-    state := (curr_state & core.PIEN_MASK) | state
-    writereg(core.ENABLE, 1, @state)
 
 
 PUB prox_int_hi_thresh(): thresh
@@ -776,11 +758,11 @@ PUB prox_pulse_cnt(nr_pulses): curr_setting     'XXX tentatively named
     case nr_pulses
         1..64:
             nr_pulses -= 1
+            nr_pulses := (curr_setting & core.PPULSE_MASK) | nr_pulses
+            writereg(core.PPULSECNT, 1, @nr_pulses)
         other:
-            return (curr_setting & core.PPULSE_BITS) + 1
+            return ( (curr_setting & core.PPULSE_BITS) + 1 )
 
-    nr_pulses := (curr_setting & core.PPULSE_MASK) | nr_pulses
-    writereg(core.PPULSECNT, 1, @nr_pulses)
 
 
 PUB red_data(): rdata
@@ -804,11 +786,10 @@ PUB sleep_after_ints(enable): curr_setting
     case ||(enable)
         0, 1:
             enable := ||(enable) << core.SAI
+            enable := (curr_setting & core.SAI_MASK) | enable
+            writereg(core.CONFIG3, 1, @enable)
         other:
-            curr_setting := ((curr_setting >> core.SAI) & 1) == 1
-
-    enable := (curr_setting & core.SAI_MASK) | enable
-    writereg(core.CONFIG3, 1, @enable)
+            return ( ((curr_setting >> core.SAI) & 1) == 1 )
 
 
 PUB wait_time(usecs): curr_setting
@@ -823,7 +804,7 @@ PUB wait_time(usecs): curr_setting
         other:
             curr_setting := 0
             readreg(core.WTIME, 1, @curr_setting)
-            return (256-curr_setting) * 2_780
+            return ( (256-curr_setting) * 2_780 )
 
 
 PUB wait_timer_ena(state): curr_state
@@ -835,11 +816,10 @@ PUB wait_timer_ena(state): curr_state
     case ||(state)
         0, 1:
             state := ||(state) << core.WEN
+            state := (curr_state & core.WEN_MASK) | state
+            writereg(core.ENABLE, 1, @state)
         other:
-            return ((curr_state >> core.WEN) & 1) == 1
-
-    state := (curr_state & core.WEN_MASK) | state
-    writereg(core.ENABLE, 1, @state)
+            return ( ((curr_state >> core.WEN) & 1) == 1 )
 
 
 PUB white_data(): cdata
