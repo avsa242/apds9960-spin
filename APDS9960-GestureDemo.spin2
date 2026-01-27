@@ -163,7 +163,7 @@ pub processgesturedata(): g | u_first, d_first, l_first, r_first, u_last, d_last
 '                dd(@"first: ", i, 13)
                 quit
 
-        if ( (u_first == 0) || (d_first == 0) or (l_first == 0) or (r_first == 0) )
+        if ( (u_first == 0) or (d_first == 0) or (l_first == 0) or (r_first == 0) )
             return false
 
         repeat i from _total to 0
