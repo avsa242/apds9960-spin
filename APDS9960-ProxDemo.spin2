@@ -5,21 +5,20 @@
         * Proximity sensing functionality
     Author:         Jesse Burt
     Started:        Jun 3, 2024
-    Updated:        Jun 3, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jan 28, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
 
 CON
 
-    _clkfreq    = cfg._clkfreq_def
-    _xtlfreq    = cfg._xtlfreq
+    _clkfreq    = 180_000_000
+    _xtlfreq    = 20_000_000
 
 
 OBJ
 
-    cfg:    "boardcfg.p2eval"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     apds:   "sensor.light.apds9960" | SCL=0, SDA=1, I2C_FREQ=400_000
 
@@ -69,7 +68,7 @@ PUB main() | prox, proxint_lo, proxint_hi, proxint_dur
 PUB setup()
 
     ser.start()
-    waitms(30)
+
     ser.clear()
     ser.strln(@"Serial terminal started")
 
@@ -82,7 +81,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

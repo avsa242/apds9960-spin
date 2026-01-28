@@ -5,24 +5,23 @@
         * Proximity sensing functionality
     Author:         Jesse Burt
     Started:        Aug 3, 2020
-    Updated:        Jun 2, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jan 28, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
 
 CON
 
-    _clkmode    = cfg._clkmode
-    _xinfreq    = cfg._xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
 
 OBJ
 
-    cfg:    "boardcfg.flip"
-    time:   "time"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     apds:   "sensor.light.apds9960" | SCL=28, SDA=29, I2C_FREQ=400_000
+    time:   "time"
 
 
 PUB main() | prox, proxint_lo, proxint_hi, proxint_dur
@@ -51,14 +50,14 @@ PUB main() | prox, proxint_lo, proxint_hi, proxint_dur
 
     proxint_dur := apds.prox_int_duration()
 
-    ser.printf2(@"\n\rInterrupt thresholds (lo:hi): %d:%d\n\r", proxint_lo, proxint_hi)
-    ser.printf1(@"Proximity interrupt duration: %d cycles", proxint_dur)
+    ser.printf(@"\n\rInterrupt thresholds (lo:hi): %d:%d\n\r", proxint_lo, proxint_hi)
+    ser.printf(@"Proximity interrupt duration: %d cycles", proxint_dur)
     apds.prox_int_clear()
     repeat
         repeat until apds.prox_data_rdy()       ' wait for new dataset
         prox := apds.prox_data()
         ser.pos_xy(0, 7)
-        ser.printf1(@"Proximity data: %d", prox)' show raw data (unsigned 8bit)
+        ser.printf(@"Proximity data: %d", prox)' show raw data (unsigned 8bit)
         if ( apds.prox_interrupt() )            ' show a message if threshold
             ser.str(@" (int)")                  '   is crossed
         else
@@ -83,7 +82,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

@@ -5,25 +5,24 @@
         * Gesture sensing functionality
     Author:         Jesse Burt
     Started:        Aug 2, 2020
-    Updated:        Jun 2, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jan 28, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
 
 CON
 
-    _clkmode    = cfg._clkmode
-    _xinfreq    = cfg._xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
 
 OBJ
 
-    cfg:    "boardcfg.flip"
-    time:   "time"
-    str:    "string"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     apds:   "sensor.light.apds9960" | SCL=28, SDA=29, I2C_FREQ=400_000
+    time:   "time"
+    str:    "string"
 
 
 VAR
@@ -103,12 +102,12 @@ pub msg(pstr, val, row)
 
 pub md(val)
 
-    ser.printf1(@"%03.3d", val)
+    ser.printf(@"%03.3d", val)
 
 
 pub mdn(val)
 
-    ser.printf1(@"%03.3d ", val)
+    ser.printf(@"%03.3d ", val)
 
 
 pub fl()
@@ -139,7 +138,7 @@ con
 
 pub dd(pstr, n, row)
 
-    ser.position(0, row)
+    ser.pos_xy(0, row)
     ser.str(pstr)
     mdn(_gest_u[n])
     mdn(_gest_d[n])
@@ -147,7 +146,7 @@ pub dd(pstr, n, row)
     mdn(_gest_r[n])
 
 
-pub processgesturedata() | u_first, d_first, l_first, r_first, u_last, d_last, l_last, r_last, i, ud_ratio_first, lr_ratio_first, ud_ratio_last, lr_ratio_last, ud_delta, lr_delta
+pub processgesturedata(): g | u_first, d_first, l_first, r_first, u_last, d_last, l_last, r_last, i, ud_ratio_first, lr_ratio_first, ud_ratio_last, lr_ratio_last, ud_delta, lr_delta
 
     if ( _total =< 4 )
         return false
@@ -209,7 +208,7 @@ pub processgesturedata() | u_first, d_first, l_first, r_first, u_last, d_last, l
             _lr_count := 0
 
         if ( (_ud_count == 0) and (_lr_count == 0) )
-            if ( (||(ud_delta) < GESTURE_SENSITIVITY_2) and (||(lr_delta) < GESTURE_SENSITIVITY_2) )
+            if ( (abs(ud_delta) < GESTURE_SENSITIVITY_2) and (abs(lr_delta) < GESTURE_SENSITIVITY_2) )
                 if ( (ud_delta == 0) and (lr_delta == 0) )
                     _near_count += 1
                 elseif ( (ud_delta <> 0) or (lr_delta <> 0) )
@@ -222,7 +221,7 @@ pub processgesturedata() | u_first, d_first, l_first, r_first, u_last, d_last, l
                         _gesture_state := STATE_FAR
                     return true
         else
-            if ( (||(ud_delta) < GESTURE_SENSITIVITY_2) and (||(lr_delta) < GESTURE_SENSITIVITY_2) )
+            if ( (abs(ud_delta) < GESTURE_SENSITIVITY_2) and (abs(lr_delta) < GESTURE_SENSITIVITY_2) )
                 if ( (ud_delta == 0) and (lr_delta == 0) )
                     _near_count += 1
 
@@ -235,7 +234,7 @@ pub processgesturedata() | u_first, d_first, l_first, r_first, u_last, d_last, l
     return false
 
 
-pub decodegesture()
+pub decodegesture(): g
 
     if ( _gesture_state == STATE_NEAR )
         _gesture_motion := NEAR
@@ -255,22 +254,22 @@ pub decodegesture()
     elseif ( (_ud_count == 0) and (_lr_count == -1) )
         _gesture_motion := LEFT
     elseif ( (_ud_count == -1) and (_lr_count == 1) )
-        if ( ||(_ud_delta) > ||(_lr_delta) )
+        if ( abs(_ud_delta) > abs(_lr_delta) )
                 _gesture_motion := UP
         else
             _gesture_motion := DOWN
     elseif ( (_ud_count == 1) and (_lr_count == -1) )
-        if ( ||(_ud_delta) > ||(_lr_delta) )
+        if ( abs(_ud_delta) > abs(_lr_delta) )
                 _gesture_motion := DOWN
         else
             _gesture_motion := LEFT
     elseif ( (_ud_count == -1) and (_lr_count == -1) )
-        if ( ||(_ud_delta) > ||(_lr_delta) )
+        if ( abs(_ud_delta) > abs(_lr_delta) )
             _gesture_motion := UP
         else
             _gesture_motion := LEFT
     elseif ( (_ud_count == 1) and (_lr_count == 1) )
-        if ( ||(_ud_delta) > ||(_lr_delta) )
+        if ( abs(_ud_delta) > abs(_lr_delta) )
             _gesture_motion := DOWN
         else
             _gesture_motion := RIGHT
@@ -295,7 +294,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
