@@ -19,7 +19,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the APDS996
 * Proximity interrupt source (with persistence filter, and configurable lo/hi thresholds)
 * Optional low-power sleep mode when an interrupt is asserted
 * Set LED drive current (prox., gesture)
-* Gesture sensing (**untested**; read U, R, D, L channels independently or all channels simultaneously)
+* Gesture sensing (read U, R, D, L channels independently or all channels simultaneously)
 * Gesture interrupt source (with configurable threshold)
 
 
@@ -37,16 +37,15 @@ P2/SPIN2:
 
 | Processor | Language | Compiler               | Backend      | Status                |
 |-----------|----------|------------------------|--------------|-----------------------|
-| P1        | SPIN1    | FlexSpin (6.9.4)       | Bytecode     | OK                    |
-| P1        | SPIN1    | FlexSpin (6.9.4)       | Native/PASM  | OK                    |
-| P2        | SPIN2    | FlexSpin (6.9.4)       | NuCode       | OK                    |
-| P2        | SPIN2    | FlexSpin (6.9.4)       | Native/PASM2 | OK                    |
+| P1        | SPIN1    | FlexSpin (7.6.4)       | Bytecode     | OK                    |
+| P1        | SPIN1    | FlexSpin (7.6.4)       | Native/PASM  | OK                    |
+| P2        | SPIN2    | FlexSpin (7.6.4)       | NuCode       | OK                    |
+| P2        | SPIN2    | FlexSpin (7.6.4)       | Native/PASM2 | OK                    |
 
 (other versions or toolchains not listed are __not supported__, and _may or may not_ work)
 
 
 ## Limitations
 
-* Very early in development - may malfunction, or outright fail to build
 * ALS/Prox. wait timer doesn't support the wait long feature (multiply wait timer duration by x12)
 

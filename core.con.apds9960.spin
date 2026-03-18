@@ -4,8 +4,8 @@
     Description:    APDS9960-specific constants
     Author:         Jesse Burt
     Started:        Aug 2, 2020
-    Updated:        Jun 3, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Mar 18, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -143,9 +143,9 @@ CON
         GFIFOTH_BITS    = %11
         GEXMSK_BITS     = %1111
         GEXPERS_BITS    = %11
-        GFIFOTH_MASK    = GCONF1_MASK ^ (GFIFOTH_BITS << GFIFOTH)
-        GEXMSK_MASK     = GCONF1_MASK ^ (GEXMSK_BITS << GEXMSK)
-        GEXPERS_MASK    = GCONF1_MASK ^ (GEXPERS_BITS << GEXPERS)
+        GFIFOTH_MASK    = (GFIFOTH_BITS << GFIFOTH) ^ GCONF1_MASK
+        GEXMSK_MASK     = (GEXMSK_BITS << GEXMSK) ^ GCONF1_MASK
+        GEXPERS_MASK    = (GEXPERS_BITS << GEXPERS) ^ GCONF1_MASK
 
     GCONF2              = $A3
     GCONF2_MASK         = $7F
@@ -193,6 +193,7 @@ CON
     GSTATUS             = $AF
         GFOV            = 1
         GVALID          = 0
+        GVALID_BIT      = 1 << GVALID
 
     IFORCE              = $E4                               ' Write any value
     PICLEAR             = $E5                               '
@@ -211,7 +212,7 @@ PUB null()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
