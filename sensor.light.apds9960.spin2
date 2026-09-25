@@ -4,7 +4,7 @@
     Description:    Driver for the APDS9960 Proximity, Ambient Light, RGB and Gesture sensor
     Author:         Jesse Burt
     Started:        Jun 3, 2024
-    Updated:        Mar 18, 2026
+    Updated:        Sep 25, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -313,29 +313,55 @@ PUB gest_fifo_overflow(): f
     f := ( ((f >> core.GFOV) & 1) == 1 )
 
 
-PUB gest_led_current(i=-2): c | ledboost
+PUB gest_led_current(i=-2): c | gldrive, ledboost
 ' Set LED drive current in gesture mode, in milliamperes
-'   Valid values: 300, 200, 150, *100, 50, 25, 12_5 (12.5)
-'   Any other value polls the device and returns the current setting
+'   i:              13 (=12.5), 19 (=18.75), 25, 38 (=37.5), 50, 75, 100, 150, 200, 300
+'                   (default: 100)
+'   other values:   return the current setting
     c.byte[0] := readreg(core.GCONF2)
     c.byte[1] := readreg(core.CONFIG2)
     case i
-        100, 50, 25, 12_5:
-            i := lookdownz(i: 100, 50, 25, 12_5) << core.GLDRIVE
-        150, 200, 300:
-            i := 0
-            ledboost := lookdown(i: 150, 200, 300)
+        13:                                     ' 12.5
+            gldrive := 3 << core.GLDRIVE
+            ledboost := 0
+        19:                                     ' 18.75
+            gldrive := 3 << core.GLDRIVE
+            ledboost := 1 << core.LED_BOOST
+        25:
+            gldrive := 2 << core.GLDRIVE
+            ledboost := 0
+        38:                                     ' 37.5
+            gldrive := 2 << core.GLDRIVE
+            ledboost := 1 << core.LED_BOOST
+        50:
+            gldrive := 1 << core.GLDRIVE
+            ledboost := 0
+        75:
+            gldrive := 1 << core.GLDRIVE
+            ledboost := 1 << core.LED_BOOST
+        100:
+            gldrive := 0
+            ledboost := 0
+        150:
+            gldrive := 0
+            ledboost := 1 << core.LED_BOOST
+        200:
+            gldrive := 0
+            ledboost := 2 << core.LED_BOOST
+        300:
+            gldrive := 0
+            ledboost := 3 << core.LED_BOOST
         other:
-            c.byte[0] := (c.byte[0] >> core.GLDRIVE) & core.GLDRIVE_BITS
-            c.byte[1] := (c.byte[1] >> core.LED_BOOST) & core.LED_BOOST_BITS
-            if ( c.byte[1] )
-                return lookdown(c.byte[1]: 150, 200, 300)
-            else
-                return lookupz(c.byte[0]: 100, 50, 25, 12_5)
+            gldrive := (c.byte[0] >> core.GLDRIVE) & core.GLDRIVE_BITS
+            ledboost := (c.byte[1] >> core.LED_BOOST) & core.LED_BOOST_BITS
+            ' convert GLDRIVE bitfield to 100, 50, 25, 13 (12.5)
+            '   then multiply by LED_BOOST (1.00, 1.50, 2.00, 3.00) for the final current drive
+            c := lookupz(gldrive: 100, 50, 25, 13)
+            return (c * (lookupz(ledboost: 100, 150, 200, 300) ) ) / 100
 
-    i := (c.byte[0] & core.GLDRIVE_MASK) | i
+    gldrive := (c.byte[0] & core.GLDRIVE_MASK) | gldrive
     ledboost := (c.byte[1] & core.LEDBOOST_MASK) | ledboost
-    writereg(core.GCONF2, i)
+    writereg(core.GCONF2, gldrive)
     writereg(core.CONFIG2, ledboost)
 
 
@@ -618,17 +644,55 @@ pub last_gesture(tmo=300): g | smp_cnt, t, delta_v, delta_h
 
 PUB led_current(i=-2): c
 ' Set LED drive current, used in Proximity and Gesture sensing modes, in milliamperes
-'   Valid values: *100, 50, 25, 12_5 (12.5)
 '   Any other value polls the device and returns the current setting
-    c := readreg(core.CONTROL)
+'   i:              13 (=12.5), 19 (=18.75), 25, 38 (=37.5), 50, 75, 100, 150, 200, 300
+'                   (default: 100)
+'   other values:   return the current setting
+    c.byte[0] := readreg(core.GCONF2)
+    c.byte[1] := readreg(core.CONTROL)
     case i
-        100, 50, 25, 12_5:
-            i := lookdownz(i: 100, 50, 25, 12_5) << core.LDRIVE
-            i := (c & core.LDRIVE_MASK) | i
-            writereg(core.CONTROL, i)
+        13:                                     ' 12.5
+            ldrive := 3 << core.LDRIVE
+            ledboost := 0
+        19:                                     ' 18.75
+            ldrive := 3 << core.LDRIVE
+            ledboost := 1 << core.LED_BOOST
+        25:
+            ldrive := 2 << core.LDRIVE
+            ledboost := 0
+        38:                                     ' 37.5
+            ldrive := 2 << core.LDRIVE
+            ledboost := 1 << core.LED_BOOST
+        50:
+            ldrive := 1 << core.LDRIVE
+            ledboost := 0
+        75:
+            ldrive := 1 << core.LDRIVE
+            ledboost := 1 << core.LED_BOOST
+        100:
+            ldrive := 0
+            ledboost := 0
+        150:
+            ldrive := 0
+            ledboost := 1 << core.LED_BOOST
+        200:
+            ldrive := 0
+            ledboost := 2 << core.LED_BOOST
+        300:
+            ldrive := 0
+            ledboost := 3 << core.LED_BOOST
         other:
-            c := (c >> core.LDRIVE) & core.LDRIVE_BITS
-            return lookupz(c: 100, 50, 25, 12_5)
+            ldrive := (c.byte[0] >> core.LDRIVE) & core.LDRIVE_BITS
+            ledboost := (c.byte[1] >> core.LED_BOOST) & core.LED_BOOST_BITS
+            ' convert LDRIVE bitfield to 100, 50, 25, 13 (12.5)
+            '   then multiply by LED_BOOST (1.00, 1.50, 2.00, 3.00) for the final current drive
+            c := lookupz(ldrive: 100, 50, 25, 13)
+            return (c * (lookupz(ledboost: 100, 150, 200, 300) ) ) / 100
+
+    ldrive := (c.byte[0] & core.LDRIVE_MASK) | ldrive
+    ledboost := (c.byte[1] & core.LEDBOOST_MASK) | ledboost
+    writereg(core.GCONF2, ldrive)
+    writereg(core.CONTROL, ledboost)
 
 
 PUB opmode(md=-2): c
